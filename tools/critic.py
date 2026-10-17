@@ -93,7 +93,12 @@ def main():
     check(R, 'Short lines (≤ 9 words)', not long_text, ', '.join(long_text) or 'all lines short', 'warn')
 
     # 5. No accidental black, no dead air on screen.
-    blacks = [b for b in V.black_segments(a.video) if b[0] > 0.05 and b[1] < dur - 0.05]
+    def meant(s, e):
+        # a dark title card or a deliberate blackout after a drop is design, not an accident
+        cover = sum(max(0, min(e, x['end']) - max(s, x['start'])) for x in tl['scenes'] if x['kind'] in HOLD_OK)
+        drop = any(ev['type'] == 'drop' and abs(ev['t'] - s) <= 0.5 and e - s <= 2.5 for ev in tl['events'])
+        return cover >= 0.8 * (e - s) or drop
+    blacks = [b for b in V.black_segments(a.video) if b[0] > 0.05 and b[1] < dur - 0.05 and not meant(*b)]
     check(R, 'No black frames', not blacks, ', '.join(f"{s:.2f}–{e:.2f}s" for s, e in blacks) or 'none')
     frozen = []
     for s, e in V.frozen_segments(a.video, 2.5):
@@ -128,6 +133,14 @@ def main():
             detail += f"; closest {n['t']}s ~ {n['ref']} @ {n['ref_t']}s"
         check(R, 'Original (not a reference)', o['share'] <= 0.05 and worst < 3, detail)
 
+    # 8. Layout: the renderer's audit of where every visible word sat (engine/render.mjs writes layout.json).
+    lay = os.path.join(os.path.dirname(a.manifest), 'layout.json')
+    if os.path.exists(lay):
+        issues = json.load(open(lay))
+        check(R, 'Type placement', not issues,
+              '; '.join(f"{i['what']} {i['kind']} at {i['from']}–{i['to']}s" for i in issues[:4]) + (f" (+{len(issues) - 4} more)" if len(issues) > 4 else '')
+              if issues else 'every word in title-safe, off pictures and off other words')
+
     sheet = V.contact_sheet(a.video, os.path.join(a.out, 'contact.jpg'))
     fails = [r for r in R if r['status'] == 'fail']
     warns = [r for r in R if r['status'] == 'warn']
@@ -150,7 +163,10 @@ def main():
               'Now look at contact.jpg yourself and score it with the rubric in skills/video-critic.']
     open(os.path.join(a.out, 'report.md'), 'w').write('\n'.join(lines) + '\n')
     json.dump({'video': a.video, 'pass': not fails, 'checks': R, 'cuts': detected, 'loudness_curve': curve}, open(os.path.join(a.out, 'report.json'), 'w'), indent=2)
-    print('\n'.join(lines[:len(R) + 8]))
+    # the terminal gets aligned columns; report.md keeps the table
+    w = max(len(r['check']) for r in R)
+    print('\n'.join(lines[:5]))
+    print('\n'.join(f"{icon[r['status']]}  {r['check']:<{w}}  {r['detail']}" for r in R))
     print(f"▸ critic -> {a.out}/report.md")
     return 1 if fails else 0
 

@@ -290,6 +290,21 @@ def thud(r, soft=True):
     return np.tanh(boom * 1.2) + np.pad(paper_tap(r, soft), (0, n - int(0.25 * SR))) * 0.6
 
 
+def clapper(r):
+    """A slate's sticks meeting: two hardwood strikes a few ms apart, a short woody body, a dry crack on top."""
+    n = int(0.35 * SR)
+    t = np.arange(n) / SR
+    out = np.zeros(n)
+    for k, (delay, amp) in enumerate(((0.0, 1.0), (0.0042, 0.55))):
+        d = int(delay * SR)
+        tt = t[: n - d]
+        body = sum(a * np.sin(2 * np.pi * f * tt) * np.exp(-tt / tau) for f, a, tau in ((610, 0.8, 0.022), (1430, 0.55, 0.014), (2950, 0.3, 0.008)))
+        crack = highpass(r.standard_normal(n - d), 1400) * np.exp(-tt / 0.006)
+        out[d:] += amp * (body + 0.9 * crack)
+    thump = np.sin(2 * np.pi * (95 + 80 * np.exp(-t / 0.008)) * t) * np.exp(-t / 0.05) * 0.5
+    return np.tanh(1.4 * (out + thump)) * 0.9
+
+
 def key_tap(r):
     n = int(0.03 * SR)
     t = np.arange(n) / SR
@@ -504,13 +519,15 @@ def sound_design(man):
     for ev in man['events']:
         typ, t = ev['type'], ev['t']
         if typ == 'key':
-            place(out, key_tap(r), t, gain=0.12, pan=r.uniform(-0.15, 0.15))
+            place(out, key_tap(r), t, gain=0.12 * ev.get('gain', 1), pan=r.uniform(-0.15, 0.15))
         elif typ == 'click':
             place(out, ui_click(r), t, gain=0.22)
+        elif typ == 'clap':
+            place(out, clapper(r), t - 0.002, gain=0.5 * ev.get('gain', 1))
         elif typ == 'pop':
             place(out, tick(1200), t, gain=0.08)
         elif typ == 'whoosh':
-            place(out, whoosh(ev.get('len', 0.6), r), t, gain=0.07)
+            place(out, whoosh(ev.get('len', 0.6), r), t, gain=0.035 if ev.get('soft') else 0.07)
         elif typ == 'rustle':
             place(out, paper_rustle(r, ev.get('len', 1.2)), t, gain=0.09, pan=r.uniform(-0.6, 0.6))
         elif typ == 'land':
@@ -570,7 +587,9 @@ def loudnorm(src, dst, lufs, tp=-1.0):
     m = json.loads(first[first.rindex('{'):first.rindex('}') + 1])
     af = (f"loudnorm=I={lufs}:TP={tp}:LRA=11:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
           f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true")
-    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', src, '-af', af, '-ar', str(SR), dst], check=True)
+    # a look-ahead limiter after the gain: sharp transients (claps, clicks) otherwise overshoot once encoded to AAC
+    lim = 10 ** ((tp - 0.8) / 20)
+    subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', src, '-af', f'{af},aresample=192000,alimiter=limit={lim:.4f}:attack=1:release=40:level=disabled,aresample={SR}', '-ar', str(SR), dst], check=True)
 
 
 def main():

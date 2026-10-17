@@ -21,7 +21,7 @@ Set it in the film with `F.music({key, style, arc})`. Tempo is the film's `bpm`.
 - **`drop`** stops the music dead until the next `thud` or `hit`, while the room keeps ringing. Use it once, before the film's biggest moment.
 - **`land`** cues play piano notes up a pentatonic scale (`i` of `n` picks the step). A cascade of landings becomes a rising run. `soft: true` for small things.
 - **`resolve`** plays a rolled open chord and a low tail over the logo. The last 0.6s fades to silence.
-- The mix gets a two-band convolution room, kick sidechain on the pad, glue compression, a soft clip, and two-pass loudness normalization.
+- The mix gets a two-band convolution room, kick sidechain on the pad, glue compression, a soft clip, and two-pass loudness normalization, then a true-peak limiter so sharp transients don't clip once encoded.
 
 ## Foley cues
 
@@ -33,7 +33,10 @@ Set it in the film with `F.music({key, style, arc})`. Tempo is the film's `bpm`.
 | `swell` (`len`) | rising air | the build into a moment |
 | `whoosh` (`len`) | panned air | fast moves across the frame |
 | `flip` | a flick | cards and pages turning |
+| `clap` | a clapperboard: two hardwood strikes and a dry crack | two things meeting hard on the beat |
 | `click`, `key`, `tick`, `pop`, `glint` | UI clicks, keys, wood ticks, a bell sparkle | UI actions, small details |
+
+Footage carries its own sounds: `F.cueClip(clip, at, {from})` puts every key press and click recorded by `engine/record.mjs` on the frame where it plays.
 
 Put cues on the exact frame of the contact (the end of a landing tween, not its start). The score never guesses.
 

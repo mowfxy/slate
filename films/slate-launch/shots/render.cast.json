@@ -1,0 +1,196 @@
+{
+ "command": "node engine/render.mjs films/slate-launch --no-critic",
+ "cols": 96,
+ "code": 0,
+ "duration": 574.4270198649999,
+ "events": [
+  [
+   2.11,
+   "▸ Slate · Take one: 40.20s @ 30fps, 1920×1080, 13 scenes, 100 BPM\n"
+  ],
+  [
+   47.551,
+   "▸ layout: 2 momentary crossing(s) under 0.3s, ignored\n"
+  ],
+  [
+   47.552,
+   "▸ layout: every word sits in title-safe, off pictures and off other words\n"
+  ],
+  [
+   58.372,
+   "\r▸ frames 30/1206 · 2.8 fps · eta 424s   "
+  ],
+  [
+   60.696,
+   "▸ score: 40.20s, 100 BPM, glass in D, 192 cues, mastered to -14.0 LUFS -> /home/claude/slate/films/slate-launch/build/mix.wav\n"
+  ],
+  [
+   67.133,
+   "\r▸ frames 60/1206 · 3.1 fps · eta 374s   "
+  ],
+  [
+   76.498,
+   "\r▸ frames 90/1206 · 3.1 fps · eta 359s   "
+  ],
+  [
+   84.474,
+   "\r▸ frames 120/1206 · 3.3 fps · eta 334s   "
+  ],
+  [
+   91.873,
+   "\r▸ frames 150/1206 · 3.4 fps · eta 312s   "
+  ],
+  [
+   98.403,
+   "\r▸ frames 180/1206 · 3.5 fps · eta 290s   "
+  ],
+  [
+   104.577,
+   "\r▸ frames 210/1206 · 3.7 fps · eta 270s   "
+  ],
+  [
+   111.014,
+   "\r▸ frames 240/1206 · 3.8 fps · eta 255s   "
+  ],
+  [
+   117.72,
+   "\r▸ frames 270/1206 · 3.8 fps · eta 243s   "
+  ],
+  [
+   128.292,
+   "\r▸ frames 300/1206 · 3.7 fps · eta 244s   "
+  ],
+  [
+   139.887,
+   "\r▸ frames 330/1206 · 3.6 fps · eta 245s   "
+  ],
+  [
+   150.852,
+   "\r▸ frames 360/1206 · 3.5 fps · eta 243s   "
+  ],
+  [
+   162.518,
+   "\r▸ frames 390/1206 · 3.4 fps · eta 241s   "
+  ],
+  [
+   173.49,
+   "\r▸ frames 420/1206 · 3.3 fps · eta 236s   "
+  ],
+  [
+   184.385,
+   "\r▸ frames 450/1206 · 3.3 fps · eta 230s   "
+  ],
+  [
+   196.15,
+   "\r▸ frames 480/1206 · 3.2 fps · eta 225s   "
+  ],
+  [
+   207.016,
+   "\r▸ frames 510/1206 · 3.2 fps · eta 218s   "
+  ],
+  [
+   218.522,
+   "\r▸ frames 540/1206 · 3.2 fps · eta 211s   "
+  ],
+  [
+   229.558,
+   "\r▸ frames 570/1206 · 3.1 fps · eta 203s   "
+  ],
+  [
+   238.792,
+   "\r▸ frames 600/1206 · 3.1 fps · eta 193s   "
+  ],
+  [
+   246.464,
+   "\r▸ frames 630/1206 · 3.2 fps · eta 182s   "
+  ],
+  [
+   254.229,
+   "\r▸ frames 660/1206 · 3.2 fps · eta 171s   "
+  ],
+  [
+   261.915,
+   "\r▸ frames 690/1206 · 3.2 fps · eta 160s   "
+  ],
+  [
+   269.748,
+   "\r▸ frames 720/1206 · 3.2 fps · eta 150s   "
+  ],
+  [
+   277.331,
+   "\r▸ frames 750/1206 · 3.3 fps · eta 140s   "
+  ],
+  [
+   285.181,
+   "\r▸ frames 780/1206 · 3.3 fps · eta 130s   "
+  ],
+  [
+   292.043,
+   "\r▸ frames 810/1206 · 3.3 fps · eta 120s   "
+  ],
+  [
+   298.688,
+   "\r▸ frames 840/1206 · 3.3 fps · eta 109s   "
+  ],
+  [
+   304.818,
+   "\r▸ frames 870/1206 · 3.4 fps · eta 99s   "
+  ],
+  [
+   311.179,
+   "\r▸ frames 900/1206 · 3.4 fps · eta 90s   "
+  ],
+  [
+   318.726,
+   "\r▸ frames 930/1206 · 3.4 fps · eta 80s   "
+  ],
+  [
+   326.959,
+   "\r▸ frames 960/1206 · 3.4 fps · eta 72s   "
+  ],
+  [
+   336.197,
+   "\r▸ frames 990/1206 · 3.4 fps · eta 63s   "
+  ],
+  [
+   350.597,
+   "\r▸ frames 1020/1206 · 3.4 fps · eta 55s   "
+  ],
+  [
+   365.001,
+   "\r▸ frames 1050/1206 · 3.3 fps · eta 47s   "
+  ],
+  [
+   373.979,
+   "\r▸ frames 1080/1206 · 3.3 fps · eta 38s   "
+  ],
+  [
+   382.503,
+   "\r▸ frames 1110/1206 · 3.3 fps · eta 29s   "
+  ],
+  [
+   391.453,
+   "\r▸ frames 1140/1206 · 3.3 fps · eta 20s   "
+  ],
+  [
+   405.378,
+   "\r▸ frames 1170/1206 · 3.3 fps · eta 11s   "
+  ],
+  [
+   442.599,
+   "\r▸ frames 1200/1206 · 3.0 fps · eta 2s   "
+  ],
+  [
+   451.313,
+   "\n"
+  ],
+  [
+   451.314,
+   "▸ frames done in 404s\n"
+  ],
+  [
+   574.408,
+   "▸ video -> out/slate-launch.mp4\n"
+  ]
+ ]
+}

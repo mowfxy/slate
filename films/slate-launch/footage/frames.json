@@ -1,0 +1,18 @@
+{
+  "source": "frames.mjs",
+  "url": "/films/slate-launch/shots/frames.html",
+  "width": 1920,
+  "height": 800,
+  "scale": 1.25,
+  "fps": 30,
+  "frames": 187,
+  "duration": 6.233333333333333,
+  "marks": {
+    "start": 0,
+    "m1": 1.6,
+    "m2": 3.2,
+    "m3": 4.8
+  },
+  "events": [],
+  "rects": {}
+}

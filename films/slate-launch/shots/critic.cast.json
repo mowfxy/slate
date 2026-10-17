@@ -1,0 +1,12 @@
+{
+ "command": "python3 tools/critic.py out/slate-launch.mp4 --manifest films/slate-launch/build/manifest.json --out films/slate-launch/build/critic",
+ "cols": 96,
+ "code": 0,
+ "duration": 23.350686747,
+ "events": [
+  [
+   23.323,
+   "# Critic report: slate-launch.mp4\n\n**PASS** · 14 passed, 1 warnings, 0 failed\n\n1920×1080 · 30 fps · 40.20s · 100 BPM · 11 cuts · median shot 3.32s\n✅  Duration matches the manifest  40.20s rendered vs 40.20s planned\n✅  Frame size and rate            1920×1080 @ 30fps\n✅  Cuts on the beat               11/11 detected cuts within a frame of the ¼-beat grid (100%)\n⚠️  Planned cuts are visible       2/7 planned cuts detected (29%)\n✅  The ending lands               0 cuts in the final 15%; cuts per quarter [2, 2, 1, 6]\n✅  Logo holds                     logo on screen 3.60s (≥ 2.5s)\n✅  Every line is readable         all words held long enough\n✅  Short lines (≤ 9 words)        all lines short\n✅  No black frames                none\n✅  Nothing sits frozen            motion everywhere it should be\n✅  Loudness on target             -13.9 LUFS integrated (target -14.0), LRA 6.4 LU\n✅  Peaks are safe                 peak -1.3 dBFS (≤ −0.5)\n✅  Sound resolves at the end      last 0.25s at -41.8 dBFS\n✅  Original (not a reference)     0/45 frames close to a reference (0.0%)\n✅  Type placement                 every word in title-safe, off pictures and off other words\n▸ critic -> films/slate-launch/build/critic/report.md\n"
+  ]
+ ]
+}

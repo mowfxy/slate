@@ -8,6 +8,7 @@
 //   --workers 4          parallel browser pages (default: CPU count)
 //   --music track.wav    use a supplied track instead of the generated score (see sound-design)
 //   --offset 0.42        seconds into --music where its first downbeat is (tools/beatgrid.py prints it)
+//   --audit              only check the layout (type in title-safe, off pictures, off other type) and exit
 //   --no-critic          skip the critic
 import fs from 'node:fs';
 import os from 'node:os';
@@ -31,7 +32,7 @@ const pageUrl = `${url}/${path.relative(ROOT, filmDir).split(path.sep).join('/')
 const browser = await chromium.launch({
   executablePath: findChrome(),
   // software raster is about twice as fast as emulated GPU raster for CSS-heavy pages; WebGL still runs on SwiftShader
-  args: ['--font-render-hinting=none', '--disable-lcd-text', '--force-color-profile=srgb', '--hide-scrollbars', '--enable-unsafe-swiftshader'],
+  args: ['--font-render-hinting=none', '--disable-lcd-text', '--force-color-profile=srgb', '--hide-scrollbars', '--enable-unsafe-swiftshader', '--disable-media-suspend', '--disable-background-media-suspend', '--autoplay-policy=no-user-gesture-required'],
 });
 
 async function openPage(scale) {
@@ -39,7 +40,7 @@ async function openPage(scale) {
   const ctx = await browser.newContext({viewport: {width: 1920, height: 1080}, deviceScaleFactor: scale});
   const page = await ctx.newPage();
   page.on('pageerror', (e) => console.error('page error:', e.message));
-  page.on('console', (m) => { if (m.type() === 'error') console.error('console:', m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) console.error('console:', m.text()); });
   await page.goto(pageUrl);
   await page.waitForFunction(() => window.__slate, null, {timeout: 60000});
   const man = await page.evaluate(() => window.__slate.manifest());
@@ -64,6 +65,7 @@ const scale = draft ? 0.5 : 1;
 const first = await openPage(scale);
 const man = first.man;
 fs.writeFileSync(path.join(build, 'manifest.json'), JSON.stringify(man, null, 2));
+if (man.missing) console.error(`▸ warning: ${man.missing.length} footage file(s) missing, rendering black in their place: ${man.missing.join(', ')}`);
 log(`${man.title}: ${man.duration.toFixed(2)}s @ ${man.fps}fps, ${man.width}×${man.height}, ${man.scenes.length} scenes, ${man.bpm} BPM`);
 
 // ---- stills: style frames and spot checks
@@ -79,6 +81,29 @@ if (opt('stills')) {
   await browser.close(); server.close();
   process.exit(0);
 }
+
+// ---- layout audit: sample the film and check where every visible word sits
+async function audit(p) {
+  const step = 1 / 6, found = new Map();
+  for (let t = 0; t < man.duration; t += step) {
+    await p.page.evaluate((x) => window.__slate.seek(x), t);
+    for (const i of await p.page.evaluate(() => window.__slate.audit())) {
+      const key = i.kind + (i.at || i.what);
+      const f = found.get(key);
+      if (f && t - f.to <= step * 1.5) f.to = t; else if (!f) found.set(key, {...i, from: t, to: t});
+    }
+  }
+  // words in flight (an entrance, a wipe) may cross a margin for a moment; a problem that lasts is a layout problem
+  const all = [...found.values()].map((i) => ({...i, from: +i.from.toFixed(2), to: +i.to.toFixed(2)}));
+  const issues = all.filter((i) => i.to - i.from >= 0.3 - 1e-6);
+  if (all.length > issues.length) log(`layout: ${all.length - issues.length} momentary crossing(s) under 0.3s, ignored`);
+  fs.writeFileSync(path.join(build, 'layout.json'), JSON.stringify(issues, null, 2));
+  if (!issues.length) log('layout: every word sits in title-safe, off pictures and off other words');
+  for (const i of issues) console.log(`  ✗ layout ${i.from}–${i.to}s: ${i.what} ${i.kind}${i.on ? ` (${i.on})` : ''}${i.size ? ` (${i.size}px)` : ''}`);
+  return issues;
+}
+if (flag('audit')) { await audit(first); await browser.close(); server.close(); process.exit(0); }
+if (!draft && !opt('from')) await audit(first);
 
 // ---- score (runs while frames render)
 const python = process.env.PYTHON || 'python3';

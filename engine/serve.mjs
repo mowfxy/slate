@@ -15,7 +15,18 @@ export function serve(port = 0) {
     const file = path.join(ROOT, p);
     if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('not found'); }
     // bare imports (gsap, three) resolve through each film's import map to /engine/node_modules
-    res.writeHead(200, {'content-type': TYPES[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store'});
+    const type = TYPES[path.extname(file)] || 'application/octet-stream';
+    const size = fs.statSync(file).size;
+    // byte ranges: without them the browser can't seek video, and every clip sits on its first frame
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+    if (range) {
+      const start = range[1] ? parseInt(range[1], 10) : Math.max(0, size - parseInt(range[2], 10));
+      const end = range[1] && range[2] ? Math.min(parseInt(range[2], 10), size - 1) : size - 1;
+      if (start >= size || start > end) { res.writeHead(416, {'content-range': `bytes */${size}`}); return res.end(); }
+      res.writeHead(206, {'content-type': type, 'content-length': end - start + 1, 'content-range': `bytes ${start}-${end}/${size}`, 'accept-ranges': 'bytes', 'cache-control': 'no-store'});
+      return fs.createReadStream(file, {start, end}).pipe(res);
+    }
+    res.writeHead(200, {'content-type': type, 'content-length': size, 'accept-ranges': 'bytes', 'cache-control': 'no-store'});
     fs.createReadStream(file).pipe(res);
   });
   return new Promise((resolve) => server.listen(port, '127.0.0.1', () => resolve({server, url: `http://127.0.0.1:${server.address().port}`})));

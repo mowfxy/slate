@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Code</title>
+<!-- Shows a source file the way an editor does, for engine/record.mjs to film.
+     ?file=/films/<name>/film.js  &theme=chalk|night  &size=24
+     In a shot: rec.scroll('#code', dy), rec.do(() => code.select('some text')), rec.type('#code .edit', '...') -->
+<style>
+  @font-face { font-family: 'Slate Mono'; src: url(/engine/runtime/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Slate Mono'; src: url(/engine/runtime/fonts/jetbrains-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+  :root { --bg: #efeee9; --gutter: #e6e4dd; --fg: #24272c; --dim: #9a9ea5; --kw: #2c3a78; --str: #b34a26; --num: #2e6d68; --com: #8f939a; --sel: rgba(255, 106, 61, .18); --line: #d9d6cd; --size: 24px; }
+  :root.night { --bg: #0f1114; --gutter: #0f1114; --fg: #d6dae0; --dim: #4c525b; --kw: #9fb1ff; --str: #ffa27a; --num: #8fd1c8; --com: #5f6670; --sel: rgba(255, 106, 61, .22); --line: #1d2026; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; font: 400 var(--size)/1.6 'Slate Mono', monospace; }
+  .tab { height: 64px; display: flex; align-items: center; gap: 14px; padding: 0 40px; border-bottom: 1px solid var(--line); font-size: 18px; color: var(--dim); }
+  .tab b { color: var(--fg); font-weight: 500; }
+  #code { position: absolute; top: 65px; left: 0; right: 0; bottom: 0; overflow: hidden; padding: 28px 0 400px; }
+  .ln { display: flex; white-space: pre; position: relative; }
+  .ln i { font-style: normal; width: 5.2ch; flex: none; text-align: right; padding-right: 2.2ch; color: var(--dim); }
+  .ln.sel::before { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: var(--sel); transform-origin: 0 50%; animation: sel .45s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes sel { from { transform: scaleX(0); } }
+  .edit { outline: none; caret-color: transparent; }
+  .edit:focus::after { content: ''; display: inline-block; width: 2px; height: 1.2em; vertical-align: -0.25em; margin-left: 1px; background: var(--str); }
+  .k { color: var(--kw); font-weight: 500; } .s { color: var(--str); } .n { color: var(--num); } .c { color: var(--com); }
+</style>
+<div class="tab"><span id="path"></span></div>
+<div id="code"></div>
+<script type="module">
+  const q = new URLSearchParams(location.search);
+  if (q.get('theme') === 'night') document.documentElement.classList.add('night');
+  if (q.get('size')) document.documentElement.style.setProperty('--size', q.get('size') + 'px');
+  const file = q.get('file');
+  const parts = file.replace(/^\//, '').split('/');
+  document.getElementById('path').innerHTML = parts.slice(0, -1).join(' / ') + ' / <b>' + parts.at(-1) + '</b>';
+  const src = await (await fetch(file)).text();
+  const KW = /^(import|from|export|const|let|var|function|return|if|else|for|of|in|await|async|new|class|extends|true|false|null|undefined|this|while|break|continue)$/;
+  const esc = (s) => s.replace(/[&<>]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]));
+  // small tokenizer: comments, strings, template strings, numbers, keywords
+  function hl(line) {
+    let out = '', m;
+    const re = /(\/\/.*$)|('(?:\\.|[^'])*'|"(?:\\.|[^"])*"|`(?:\\.|[^`])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)|([^A-Za-z_$\d'"`/]+|\/|[\s\S])/g;
+    while ((m = re.exec(line))) {
+      if (m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+      else if (m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+      else if (m[3]) out += `<span class="n">${m[3]}</span>`;
+      else if (m[4]) out += KW.test(m[4]) ? `<span class="k">${m[4]}</span>` : esc(m[4]);
+      else out += esc(m[0]);
+    }
+    return out;
+  }
+  const code = document.getElementById('code');
+  code.innerHTML = src.split('\n').map((l, i) => `<div class="ln"><i>${i + 1}</i><span>${hl(l) || ' '}</span></div>`).join('');
+  window.code = {
+    /** Highlight the first line containing text; returns its top, in px, inside #code. */
+    select(text) { const el = [...code.children].find((d) => d.textContent.includes(text)); code.querySelectorAll('.sel').forEach((d) => d.classList.remove('sel')); el?.classList.add('sel'); return el ? el.offsetTop : 0; },
+    lineTop(text) { const el = [...code.children].find((d) => d.textContent.includes(text)); return el ? el.offsetTop : 0; },
+    /** Empty the first line containing text and put the caret there, so a shot can type it back in (rec.type('.edit', line)). Returns the line. */
+    erase(text) {
+      const el = [...code.children].find((d) => d.textContent.includes(text));
+      const span = el.querySelector('span');
+      const line = span.textContent;
+      span.textContent = '';
+      span.className = 'edit';
+      span.contentEditable = 'true';
+      span.spellcheck = false;
+      span.addEventListener('input', () => {
+        // re-colour as you type, caret kept at the end
+        const t = span.textContent;
+        span.innerHTML = hl(t);
+        const r = document.createRange(); r.selectNodeContents(span); r.collapse(false);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      });
+      span.focus();
+      return line.replace(/^\s+/, (w) => { span.textContent = w; const r = document.createRange(); r.selectNodeContents(span); r.collapse(false); getSelection().removeAllRanges(); getSelection().addRange(r); return ''; });
+    },
+  };
+</script>

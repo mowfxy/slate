@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Terminal</title>
+<!-- Plays a cast from engine/termcast.mjs as a terminal, for engine/record.mjs to film.
+     ?cast=/path/to/cast.json  &speed=6 (play faster)  &gap=0.6 (cap pauses, in seconds of real time)
+     &theme=night|chalk  &size=26 (font px)  &prompt=~/slate  &align=top (a fresh terminal) | bottom (default)
+     Type the command into #cmd with rec.type, press Enter, and the cast plays. -->
+<style>
+  @font-face { font-family: 'Slate Mono'; src: url(/engine/runtime/fonts/jetbrains-mono-latin-400-normal.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Slate Mono'; src: url(/engine/runtime/fonts/jetbrains-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+  :root { --bg: #0d0f12; --fg: #d9dde3; --dim: #5f6670; --accent: #ff6a3d; --ok: #8fd19e; --bad: #ff7b72; --size: 26px; }
+  :root.chalk { --bg: #efeee9; --fg: #1d2024; --dim: #8b8f96; --accent: #c2532d; --ok: #2f7a4b; --bad: #b3261e; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden; }
+  #term { position: absolute; inset: 0; padding: 72px 96px; font: 400 var(--size)/1.55 'Slate Mono', monospace; white-space: pre; display: flex; flex-direction: column; justify-content: flex-end; }
+  .ps { color: var(--dim); }
+  .ps b { color: var(--accent); font-weight: 500; }
+  #cmd { outline: none; caret-color: transparent; }
+  .caret { display: inline-block; width: .6em; height: 1.15em; vertical-align: -0.2em; background: var(--fg); animation: blink 1.06s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .hi { color: var(--accent); } .dim { color: var(--dim); }
+</style>
+<div id="term"><div id="lines"></div><div id="input"><span class="ps"></span><span id="cmd" contenteditable="true" spellcheck="false"></span><span class="caret"></span></div></div>
+<script type="module">
+  const q = new URLSearchParams(location.search);
+  if (q.get('theme') === 'chalk') document.documentElement.classList.add('chalk');
+  if (q.get('align') === 'top') document.getElementById('term').style.justifyContent = 'flex-start';
+  if (q.get('size')) document.documentElement.style.setProperty('--size', q.get('size') + 'px');
+  const speed = parseFloat(q.get('speed') || 1), gap = parseFloat(q.get('gap') || 0.6);
+  document.querySelector('.ps').innerHTML = `${q.get('prompt') || '~/slate'} <b>❯</b> `;
+  const cast = q.get('cast') ? await (await fetch(q.get('cast'))).json() : {events: []};
+  const linesEl = document.getElementById('lines'), cmd = document.getElementById('cmd'), input = document.getElementById('input');
+  cmd.focus();
+  let lines = [''], col = 0;
+  // colour the renderer's and critic's own marks
+  const paint = (s) => s.replace(/[&<>]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c]))
+    .replace(/(✅|✓|PASS)/g, '<span class="ok">$1</span>').replace(/(❌|✗|FAIL)/g, '<span class="bad">$1</span>')
+    .replace(/(⚠️)/g, '<span class="hi">$1</span>').replace(/^(▸)/g, '<span class="hi">$1</span>');
+  const maxLines = () => Math.floor((innerHeight - 144) / (parseFloat(getComputedStyle(linesEl).lineHeight) || 40)) - 1;
+  function write(s) {
+    s = s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+    for (const ch of s) {
+      if (ch === '\n') { lines.push(''); col = 0; }
+      else if (ch === '\r') col = 0;
+      else { const l = lines[lines.length - 1]; lines[lines.length - 1] = l.slice(0, col) + ch + l.slice(col + 1); col++; }
+    }
+    const shown = lines.slice(-maxLines());
+    linesEl.innerHTML = shown.map((l) => `<div>${paint(l) || '&nbsp;'}</div>`).join('');
+  }
+  function play() {
+    input.style.display = 'none';
+    write(q.get('prompt') ? '' : '');
+    linesEl.innerHTML = '';
+    lines = [`${document.querySelector('.ps').textContent}${cmd.textContent}`, ''];
+    // squeeze long waits, then speed up: the shape of the run stays, the waiting goes
+    let at = 0, prev = 0;
+    for (const [t, data] of cast.events) {
+      at += Math.min(t - prev, gap) / speed;
+      prev = t;
+      setTimeout(() => write(data), at * 1000);
+    }
+    setTimeout(() => { lines.push(''); write(''); input.style.display = ''; cmd.textContent = ''; linesEl.append(input); }, (at + 0.4) * 1000);
+    window.castEnds = at;
+  }
+  addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); play(); } });
+  window.castLength = () => { let at = 0, prev = 0; for (const [t] of cast.events) { at += Math.min(t - prev, gap) / speed; prev = t; } return at; };
+</script>

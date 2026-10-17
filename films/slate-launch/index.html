@@ -1,0 +1,39 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Slate · Take one</title>
+<script type="importmap">{"imports":{"gsap":"/engine/node_modules/gsap/index.js","gsap/":"/engine/node_modules/gsap/","three":"/engine/node_modules/three/build/three.module.js","three/addons/":"/engine/node_modules/three/examples/jsm/","slate":"/engine/runtime/slate.js"}}</script>
+<link rel="stylesheet" href="film.css">
+
+<!--
+  A slate is the board that claps shut at the start of every take, so picture and sound can be lined up.
+  This film is built from that clap: two halves meet on the beat. The matte bars are the two sticks, every
+  line of type arrives as two halves that snap together, and every proof is real footage of this very film
+  being written, previewed, rendered, scored and checked.
+-->
+<div data-stage>
+  <div class="ground"></div>
+
+  <!-- the proofs: recorded footage, framed by the bars -->
+  <section data-scene="code" class="shot"><div class="picture"><video src="footage/code.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="studio" class="shot"><div class="picture"><video src="footage/studio.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="render" class="shot"><div class="picture"><video src="footage/render.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="frames" class="shot"><div class="picture"><video src="footage/frames.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="score" class="shot"><div class="picture"><video src="footage/score.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="critic" class="shot"><div class="picture"><video src="footage/critic.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
+  <section data-scene="montage" class="shot"><div class="picture" id="montage"></div></section>
+
+  <!-- the two sticks -->
+  <div class="bar top" id="barTop"></div>
+  <div class="bar bottom" id="barBottom"><div class="slug"><span id="caption"></span><span id="tc"></span></div></div>
+  <div class="seam" id="seam"></div>
+
+  <!-- lines of type, each as a top half and a bottom half -->
+  <section data-scene="l-page" class="line"><h1>This film is a web page.</h1></section>
+  <section data-scene="l-frames" class="line"><h1>Every frame, captured.</h1></section>
+  <section data-scene="l-sound" class="line"><h1>Every sound, on its frame.</h1></section>
+  <section data-scene="l-check" class="line"><h1>Checked before you watch.</h1></section>
+  <section data-scene="mark" class="line mark"><h1>Slate</h1></section>
+  <section data-scene="sign" class="sign"><p class="tagline">Launch films, written as code.</p><p class="url">github.com/mowfxy/slate</p></section>
+</div>
+
+<script type="module" src="film.js"></script>

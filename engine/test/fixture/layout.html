@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Layout fixture</title>
+<script type="importmap">{"imports":{"gsap":"/engine/node_modules/gsap/index.js","slate":"/engine/runtime/slate.js"}}</script>
+<style>html,body{margin:0} [data-scene]{position:absolute;inset:0} p{position:absolute;margin:0;font:20px sans-serif;color:#fff} canvas{position:absolute;left:100px;top:60px;width:100px;height:60px}</style>
+<div data-stage>
+  <section data-scene="a">
+    <canvas></canvas>
+    <p id="over" style="left:110px;top:80px">over</p>
+    <p id="edge" style="left:2px;top:150px">edge</p>
+    <p id="fine" style="left:40px;top:20px">fine</p>
+    <p id="ok" data-over style="left:110px;top:95px">allowed</p>
+    <p id="half" style="left:200px;top:20px;clip-path:inset(0 0 100% 0)">hidden</p>
+  </section>
+</div>
+<script type="module">
+import {film} from 'slate';
+const F = film({fps: 10, width: 320, height: 180});
+F.scene('a', {start: 0, end: 1});
+F.end(1);
+await F.ready();
+</script>

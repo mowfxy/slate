@@ -45,16 +45,26 @@ node engine/render.mjs films/<name> --stills 1,9,22,48
 
 Look at every PNG in `films/<name>/build/stills/`. Judge it against the image bar in `video-taste` (real assets, light, depth, material, one focal point, brand type). Fix and repeat until the stills look like frames from a film you'd want to watch. They are cheap, and renders are not.
 
-## 4. Write the film
+## 4. Get the footage
+
+The film is made of real moving pictures. Plan each proof shot as footage, then get it (load `film-engine`, section Footage):
+- **The product's UI:** write a shot script per shot in `films/<name>/shots/` and record it with `node engine/record.mjs`. Real data, real typing, real clicks; record at the picture's aspect and `scale: 1.25`.
+- **A CLI or build:** record the real run with `engine/termcast.mjs`, film it with the terminal player.
+- **People, places, objects:** filmed video the person gives you (`engine/footage.mjs prepare`), or generated atmosphere with Veo if `GEMINI_API_KEY` is set. Never generate the product's UI.
+
+Watch every clip (a contact sheet: `ffmpeg -i footage/x.webm -vf "select='not(mod(n,30))',scale=480:-1,tile=4x2" -frames:v 1 sheet.jpg`). Re-record anything that stutters, starts blank, or shows nothing worth seeing. If there's no way to get footage of something, say so; don't fake it with a sliding screenshot.
+
+## 5. Write the film
 
 A film is a web page: `films/<name>/index.html` plus its CSS and JS, written new for this film. Load `film-engine` for the contract and the primitives. Write every scene yourself, for this idea. Never start from another film's code. The one exception is small utilities you've already written (a word-landing helper, for example).
 
 - Time everything in beats (`F.b(n)`), with the tempo chosen for the film's energy.
 - Declare each scene with what must be readable (`words`) and its `kind`.
+- Put every word on the grid you chose (see `video-taste`, Layout), then run `node engine/render.mjs films/<name> --audit` and fix every line it prints.
 - Place sound cues on the frames where things happen (`F.cue('land', t)`), and set the energy arc (`F.music({arc})`).
 - Preview in a browser with `node engine/serve.mjs`, then open `http://localhost:4173/films/<name>/`, where you can scrub with the arrow keys.
 
-## 5. Render, critique, fix
+## 6. Render, critique, fix
 
 ```bash
 node engine/render.mjs films/<name>            # full quality: motion blur, grain, score, critic
@@ -63,9 +73,9 @@ node engine/render.mjs films/<name> --draft    # half size, no blur: for checkin
 
 Load `video-critic`. The critic measures the file and runs the originality check. Then look at `build/critic/contact.jpg` and score it with the rubric. Fix the lowest score first, and change one or two things per round. Usually 2–3 rounds; stop after 4 and say what is still weak.
 
-## 6. Deliver
+## 7. Deliver
 
-Hand over the MP4 in `out/`, a poster frame (`ffmpeg -ss <t> -i out/<name>.mp4 -frames:v 1 poster.png`), the critic report, and two sentences: the idea, and what you'd change with more time (real footage, a licensed track). For other aspect ratios, change `width`/`height` in `film()`, re-check stills (layouts must be redesigned, not cropped), and render again.
+Hand over the MP4 in `out/`, a poster frame (`ffmpeg -ss <t> -i out/<name>.mp4 -frames:v 1 poster.png`), the critic report, and two sentences: the idea, and what you'd change with more time (a licensed track, filmed footage of people using it). For other aspect ratios, change `width`/`height` in `film()`, re-check stills (layouts must be redesigned, not cropped), and render again.
 
 ## Rules
 
