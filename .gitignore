@@ -1,6 +1,7 @@
 node_modules/
 out/
-examples/*/build/
+films/*/build/
+engine/test/fixture/build/
 __pycache__/
 *.pyc
 .DS_Store

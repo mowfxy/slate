@@ -10,7 +10,9 @@ Five reference films were measured with `tools/analyze_reference.py` (ffmpeg sce
 | Model release, the number made of everything | teaser | 1080×1080 @ 24 | 20s | 62 | 0.125s (3 frames) | −11.6 LUFS | ~108 BPM |
 | Model release, curved horizons + one line | teaser | 1280×720 @ 25 | 20s | 34 | 0.32s, accelerating | −16.4 LUFS | ~136 BPM |
 
-## What each one teaches
+## What each one does
+
+Described so you can recognise the moves and avoid them; see [do-not-copy.md](do-not-copy.md) for the principle behind each.
 
 **AI workspace launch.** White canvas; headline typed on letter by letter, accent word in the brand green. Extreme close-ups on single UI controls ("5.6 Sol Extra High", the send button) pulled back to the full window. App windows float on a deep-space background during the "it does the work" section. Phone UI for "even when you're away". Ends: headline, a soft dot, wordmark, mark. Pacing follows reading, not the beat.
 

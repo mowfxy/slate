@@ -1,95 +1,85 @@
 ---
 name: video-taste
-description: The taste guide for launch videos, feature announcements, teasers and ads. Load before writing a treatment, beat sheet or Slate spec, and when judging a render. Covers structure, pacing, type, motion, color and sound, and how to adapt each to the product.
+description: The taste guide for launch films, feature announcements, teasers and ads - principles for idea, structure, pacing, type, motion, image and sound, and how to find a film's look in the product itself. Load before pitching concepts or writing a film, and when judging a render.
 ---
 
 # Video taste
 
-Rules distilled from frame-by-frame study of top-tier launch films (product demo launches and one-idea brand teasers). Each rule is here because breaking it is what makes AI video look generic. The measured numbers behind them are in [references/benchmarks.md](references/benchmarks.md).
+This is not a style. It is why good launch films work, written so you can make a film nobody has seen before. Every film starts from the product in front of you, never from another film.
 
-## The two families
+The principles come from frame-by-frame study of five reference films (measurements in [references/benchmarks.md](references/benchmarks.md)). Their signature moves are listed in [references/do-not-copy.md](references/do-not-copy.md). Read that list before pitching: those moves belong to those films. Learn why they work, then find this product's own version.
 
-Pick one before anything else. Mixing them is the most common way to make mush.
+## 1. The idea comes from the product
 
-| | **Demo launch** (`archetype: demo`, `feature`) | **Brand teaser** (`archetype: teaser`, `ad`) |
-|---|---|---|
-| Hero | The real product UI | One visual idea |
-| Canvas | White or near-white, one accent | A curated palette pulled from the imagery |
-| Type | Neutral grotesk, typed on | Editorial serif, focus-pulled in |
-| Edit | Few hard cuts; the camera moves inside the UI | Rapid montage on the beat grid |
-| Pace set by | Reading and UI actions completing | Music |
-| Length | 30–100s | 6–30s |
-| Music | Light bed, 90–100 BPM, UI sound design on top | Driving, 110–160 BPM, builds to a hit |
+A film is one idea, made visible. The idea is never "show the features". It is a truth about the product, said with images that could only belong to this product.
 
-## Structure
+Where ideas come from, in order of strength:
+1. **The product's promise, taken literally.** Mowr says "one quiet place", so the film shows scattered work settling into one place. A sync tool promises "in step", so show things falling into step. Say the promise, then picture it with no words.
+2. **The product's own material.** Its UI nouns (cards, files, a canvas, a terminal), its logo's shape, its colors, its sound, its users' desk at 11pm. A mark with four petals can be four sheets landing. A product made of documents can be a film made of paper.
+3. **The tension it resolves.** Show the before, honestly and briefly, then the after. Noise into calm, chaos into order, slow into instant, many tools into one.
+4. **A single verb.** Settle, unfold, focus, connect, lift. The verb becomes the film's motion: how everything enters, moves and leaves.
 
-1. **One idea per film.** Say it in five words before writing anything ("look closer", "the 5 is everywhere", "from brief to premiere"). Every shot must serve it. If a shot needs explaining, cut it.
-2. **Breathe → build → peak → land.** Open calm (1–2s of space), build energy, peak right before the title, then land slow. The final quarter is the calmest part of a teaser.
-3. **The title arrives after the idea is felt**, never in the first shot.
-4. **Bookend.** End on the frame you opened on (same horizon, same bird, same mark). It makes 20 seconds feel complete.
-5. **Logo holds 2.5–5s.** Never cut a logo short. Tagline arrives ~0.5s after the mark.
-6. **Demo films alternate claim and proof:** headline → UI that proves it → next headline. Never two headlines in a row without proof, never more than ~8s of UI without a headline.
+The test for an idea: could you swap in a competitor's logo at the end and the film still works? Then it is not an idea yet.
 
-## Pacing
+## 2. One move, everywhere
 
-- **Write the edit in beats, not seconds.** Every scene length is a whole number of beats; montage shots are 2, 1, ½ or ¼ beats. Off-grid cuts feel wrong even to people who can't say why.
-- **Accelerate into the peak.** Montage shots shrink geometrically (1 beat → ¼ beat). Use `pacing: "accelerate"`.
-- **3-frame cuts only work with a repeated shape.** A glyph, a lens, a horizon line, a centered object. Without one, fast cuts are noise.
-- **Typed text:** 14–20 characters per second for headlines, 22–28 for prompts. After the last letter, hold max(1s, words/4 + 0.4s).
-- **Static is dead.** Every shot moves a little: a 3–5% push, a drift, a parallax. Holds are for titles and logos only.
+Great films repeat one motion at every scale, so fast or varied images still read as one thought. Choose the film's move from the idea's verb (landing, folding, focusing, aligning, growing) and use it for everything: how type enters, how UI arrives, how scenes change, and how the logo forms. A film with one move feels designed. A film with five transitions feels like a template.
 
-## Type
+## 3. Shape
 
-- **Two voices maximum.** Demo: a neutral grotesk (Inter, the brand's sans) at weight 600, tight tracking (−0.025em). Teaser: an editorial serif (Newsreader, the brand's serif) at 400–500.
-- **≤ 7 words on screen, ≤ 2 lines, centered, balanced wrap.** Break long thoughts into consecutive cards.
-- **Accent one word**, not a phrase: "Introducing *Slate*".
-- **Size with restraint.** Demo headlines ≈ 3% of frame width (≈55px at 1080p). Teaser titles ≈ 10–13% of the short side. Big type is not the same as confident type.
-- **Brackets as motion** (`bracketTitle`): `[word]` and `(word)` pop in as a pair and the word types inside. Great for two-part claims ("from [idea] to (deployment)"). Use once or twice per film, not every card.
-- **Text over montage** stays locked while the world cuts underneath; it flips black/white with the ground.
-- No drop shadows, no outlines, no gradients on type, no all caps headlines.
+- **Breathe, build, peak, land.** Open with space (1–2s), build, peak just before the main line or the product reveal, then land slower than you started. The last quarter is the calmest.
+- **Contrast makes the peak.** A silence before a hit, stillness before motion, darkness before light. The biggest moment in a film is often the moment everything stops.
+- **The reveal arrives after the idea is felt.** Never open on the logo or the product name.
+- **End where you started, changed.** The closing frame answers the opening one (the scattered sheets become the mark).
+- **The logo holds 2.5–5s** on a quiet frame. The tagline arrives after the mark.
+- **Claim, then proof.** Each line on screen is followed by the product proving it. Never two claims in a row with nothing shown, never long stretches of UI with nothing said.
 
-## Motion
+## 4. Pacing
 
-- **Camera, not transitions.** In demos, push in on the one control that matters (a model picker, a send button, a stat), then pull back to reveal the whole. Ease in-out, decisive in the middle (`easeCamera`).
-- **Zoom between 1× and 2.3×.** Past that, UI turns to mush.
-- **Match cuts over wipes.** Repeat a shape across cuts instead of using transition effects. The only soft transition used by the references is a focus-pull/blur-in on titles and logos.
-- **Cursor like a person:** slight arc, slows before the target, presses (scale 0.85) on click.
-- **UI floats on a world** when the film shifts from "what it is" to "what it does": put windows on `space` or `grid` backdrops.
+- **Write in beats.** Every scene starts on the beat grid; montage shots are 2, 1, ½ or ¼ beats. Off-grid cuts feel wrong even to people who can't say why.
+- **Pace follows the content's job.** Reading sets the pace for type (hold words/3.5 + 0.6s at least). Music sets the pace for montage. A UI action sets the pace for a demo (the shot ends when the action lands).
+- **Fast cuts need a constant.** Three-frame cuts only read when something stays fixed (a shape, a position, a line of type). Without one they are noise.
+- **Nothing is static.** Every shot moves a little (a 3–8% push, a drift, parallax). True holds are for the logo.
 
-## Color
+## 5. Type
 
-- **Demo:** white canvas, ink near-black, exactly one accent (plus one secondary used only in brackets). Product UI keeps its true colors.
-- **Teaser:** a palette of 4–5 colors that already live in the imagery. The title card color is taken from the montage (the red of the last butterfly becomes the card).
-- Light grounds get a paper texture; dark grounds get a little grain. Never flat #000 or flat #fff in teasers.
+- **Use the brand's own typefaces.** If there are none, pick one serif or one sans and stay with it. Two voices at most: a display voice for lines, a quiet voice for labels.
+- **≤ 7 words per line, ≤ 2 lines, ≤ 9 words on screen.** Break long thoughts across moments.
+- **Size with restraint.** Main lines 4–6% of frame width (75–110px at 1080p). Big is not confident; space is.
+- **Type moves with the film's move.** If things land, words land. If things focus, words focus. Never a generic fade or typewriter by default.
+- **One accent at most** (a word in the brand color, an italic). No outlines, no gradients on type.
 
-## Sound
+## 6. Image
 
-- **Master −14 LUFS integrated** for web and YouTube, −12 to −13 for social feeds, true peak ≤ −1 dBTP. The references sit at −11.6 to −16.4.
-- **The edit is the score.** Cuts land on the beat; typing gets key taps; clicks get clicks; camera moves get a soft whoosh; brackets get a pop.
-- **Drop before the hit.** Half a beat of near-silence (rhythm out, riser in), then the title lands on an impact.
-- **Resolve on the logo:** one ringing chord, then silence. The last frame is quiet.
-- Demo films: light glassy bed (pads, plucks, soft kick only in the busiest section). Teasers: driving pulse, claps on 2 and 4 at the peak.
+This is where most AI video looks cheap. The bar:
+- **Real product, real assets.** Use the product's actual UI (screenshots at native size or larger), its real fonts, logo and colors. Never redraw a UI as boxes. Never zoom a screenshot past about 1.5x its native pixels.
+- **Light and depth.** A key light (a warm glow, a gradient pool), real shadows under things that float, depth of field on things far from the focus, a vignette. Flat elements on flat color look like slides.
+- **Material.** Paper has a grain and a soft gradient, glass reflects, cards have a 1px edge and a shadow that tightens as they land. Finish with fine film grain.
+- **Motion blur** on anything moving fast (the engine samples subframes; set `post.blur`).
+- **One focal point per frame.** If two things compete, cut one or blur one.
+- **Color from the product.** Ground, ink, one accent, all from the brand. A dark product gets a dark film; a white-canvas product gets a white film.
 
-## Adapting to the product
+## 7. Sound
 
-Read the product before choosing anything (site, app, repo, brand kit). Then decide, and write the decision into the treatment:
+- **The edit is the score.** The music follows the film's energy arc; every landing, click and flip has a sound placed on its frame.
+- **Silence is an instrument.** Stop the music dead before the biggest moment, then let it land.
+- **Pick an instrument that fits the product's voice:** felt piano for calm, human tools; glass and bells for precise ones; a pulse for energetic consumer ads.
+- **Resolve on the logo:** a chord that rings out, then quiet.
+- **Master to −14 LUFS** (web), −12 to −13 (social feeds), true peak ≤ −1 dBTP.
 
-| Signal | Choice |
-|---|---|
-| Developer tool, infra, AI model | Demo family; grotesk; accent from brand; prompt box or terminal as hero; 96–100 BPM `glass` |
-| Consumer app, lifestyle | Teaser or ad; serif or rounded sans; warm palette; 110–125 BPM; real people/objects in footage |
-| Model or research release | Teaser; serif; scientific/archival imagery; lens or horizon motif; 120–140 BPM `pulse` |
-| Feature in an existing product | `feature` archetype: 15–45s; one claim, two proofs, logo; reuse the product's own UI chrome |
-| Paid social ad | 6–15s, 9:16 or 1:1; the claim in the first 1.5s; captions burned in; end card with the CTA |
+## 8. Format
 
-Always use the brand's own fonts and colors when given (`brand` in the spec). The rules above describe structure and restraint, not a house look.
+| Use | Length | Aspect | Notes |
+|---|---|---|---|
+| Launch film | 30–90s | 16:9 | The idea, three or four proofs, the mark |
+| Feature announcement | 15–40s | 16:9, 1:1 | One claim, one or two proofs, the mark |
+| Teaser | 6–25s | 1:1, 16:9 | One image idea, no UI or a single glimpse |
+| Paid social ad | 6–15s | 9:16, 1:1 | The claim within 1.5s, captions burned in, a CTA end card |
 
-## Before you render, ask
+## Before you build, answer in writing
 
-- Can I say the idea in five words?
-- Does every scene length come out in whole beats?
-- Is there one focal point per frame?
-- Does the energy curve go breathe → build → peak → land?
-- Does the logo hold at least 2.5s on a quiet frame?
-
-More detail: [references/archetypes.md](references/archetypes.md) (recipes with beat counts) and [references/benchmarks.md](references/benchmarks.md) (measured numbers from the references).
+- The idea in one sentence, and why it belongs only to this product.
+- The film's one move.
+- What this film does that none of the references do.
+- The palette, the type, the instrument.
+- The first frame and the last frame.

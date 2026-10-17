@@ -1,41 +1,49 @@
 ---
 name: sound-design
-description: Score, sound effects and mastering for Slate videos - the generated score from the edit, using a supplied music track on the beat grid, SFX events, and loudness targets per platform. Use when choosing music, fixing sync, or when a render sounds wrong or too quiet.
+description: Score, sound effects and mastering for Slate films - the generated score that follows the film's energy arc and cues, using a supplied track on the beat grid, foley cues, and loudness targets per platform. Use when choosing music, placing sound cues, fixing sync, or when a render sounds wrong.
 ---
 
 # Sound design
 
-Sound is half the film. In Slate the score is derived from the edit: `tools/score.py` reads `build/timeline.json` and writes `music.wav`, `sfx.wav` and the mastered `mix.wav`. `render.mjs` runs it for you.
+Sound is half the film. `tools/score.py` reads `build/manifest.json` and writes `music.wav`, `sfx.wav` and the mastered `mix.wav`. `engine/render.mjs` runs it while frames render.
 
 ## The generated score
 
-- **Tempo** = `meta.bpm`. **Key** = `audio.key`. **Style** = `audio.style`:
-  - `glass`: major-seventh pads, plucked arpeggio, soft kick only at high energy. For demos and calm confidence. 90–100 BPM.
-  - `pulse`: minor pulse, kick on every beat, offbeat hats, claps on 2 and 4 at the peak. For teasers and ads. 118–136 BPM.
-- **Arrangement follows scene `energy`** (defaults per scene type; override per scene). Layers enter as energy rises: pad → arpeggio → bass → kick → hats → claps.
-- **Hits:** every `titleCard` gets a riser over the 4 beats before it, half a beat of rhythm drop-out, then an impact and a bell chord. Set `"hit": false` to skip.
-- **Resolve:** `logoEnd` gets a ringing tonic chord; everything else stops. The last 0.35s fades to silence.
+Set it in the film with `F.music({key, style, arc})`. Tempo is the film's `bpm`.
 
-## SFX from the edit
-
-| Event | From | Sound |
+| Style | Sound | For |
 |---|---|---|
-| `key` | every typed character | soft key tap, randomized |
-| `click` | promptBox send, `cursor` points with `click` | mouse click |
-| `pop` | each bracket pair appearing | small rising blip |
-| `whoosh` | camera moves with a big zoom or pan, cardGrid entrance | filtered air, panned |
-| `cut` | montage cuts | a very quiet tick |
+| `felt` | Felt piano (stretched partials, unison strings, hammer), a warm analog pad, a sub, brushes and a soft kick at high energy | Calm, human products: study, writing, notes, wellbeing. 70–95 BPM |
+| `glass` | Bell plucks over a bright pad | Precise tools, developer products, demos. 90–110 BPM |
+| `pulse` | Minor pulse, kick on every beat, claps on 2 and 4 at the peak | Ads, teasers, energy. 115–135 BPM |
 
-To make the film quieter or busier, change energies and events in the spec, not the WAV.
+- **The arc** (`[[t, energy], ...]`, 0–1) drives the arrangement. Below 0.3 the piano is sparse. Rhythm enters above 0.55. The pad's filter opens with energy. Without an arc, scene energies are used.
+- **`drop`** stops the music dead until the next `thud` or `hit`, while the room keeps ringing. Use it once, before the film's biggest moment.
+- **`land`** cues play piano notes up a pentatonic scale (`i` of `n` picks the step). A cascade of landings becomes a rising run. `soft: true` for small things.
+- **`resolve`** plays a rolled open chord and a low tail over the logo. The last 0.6s fades to silence.
+- The mix gets a two-band convolution room, kick sidechain on the pad, glue compression, a soft clip, and two-pass loudness normalization.
+
+## Foley cues
+
+| Cue | Sound | Use for |
+|---|---|---|
+| `rustle` (`len`) | paper crinkle and air | paper, fabric, many things moving |
+| `land` | paper tap plus a piano note | anything settling into place |
+| `thud` (`soft`) | low bloom plus a tap | something heavy arriving, the end of a drop |
+| `swell` (`len`) | rising air | the build into a moment |
+| `whoosh` (`len`) | panned air | fast moves across the frame |
+| `flip` | a flick | cards and pages turning |
+| `click`, `key`, `tick`, `pop`, `glint` | UI clicks, keys, wood ticks, a bell sparkle | UI actions, small details |
+
+Put cues on the exact frame of the contact (the end of a landing tween, not its start). The score never guesses.
 
 ## Using a real track
 
 1. `python3 tools/beatgrid.py track.mp3` prints the BPM and the first downbeat.
-2. Put `"bpm"` in `meta` and `"music"` / `"offset"` in `audio`. Write all scenes in beats.
-3. Render. SFX are still generated and mixed on top; the track is faded over the last second.
-4. Confirm sync in the critic: cuts on the beat should stay ≥ 90%.
+2. Use that BPM in `film({bpm})` and write the film in beats.
+3. Render with `--music track.wav`. Foley is still generated and mixed on top.
 
-Licensed or generated music only. Never pull a song from a video you were shown as a reference.
+Use licensed or generated music only. Never pull a song from a video you were shown as a reference.
 
 ## Mastering targets
 
@@ -43,13 +51,12 @@ Licensed or generated music only. Never pull a song from a video you were shown 
 |---|---|---|
 | Web, YouTube, product pages (default) | −14 LUFS | −1 dBTP |
 | Instagram, TikTok, X feeds | −13 to −12 LUFS | −1 dBTP |
-| Presentation / keynote playback | −16 LUFS | −1 dBTP |
+| Presentation playback | −16 LUFS | −1 dBTP |
 
-Set `audio.lufs` or pass `--lufs` to `score.py`. The reference films measure −11.6 to −16.4 LUFS.
+## Checking without ears
 
-## When it sounds wrong
-
-- **Mushy:** too many layers at once; lower `energy` on UI scenes to 0.4–0.5.
-- **Typing too loud:** raise `cps` (fewer, faster taps) or reduce the key gain in `sound_design()`.
-- **Hit doesn't land:** make sure the scene before the `titleCard` has higher energy than the card, and the card starts on a bar line (beat count divisible by 4 from the start).
-- You cannot listen, so look: `ffmpeg -i build/mix.wav -lavfi showspectrumpic=s=1400x400 spec.png` shows layers, risers, hits and the tail.
+You can't listen, so look and measure:
+- `ffmpeg -i build/mix.wav -lavfi showspectrumpic=s=1600x500:scale=log:fscale=log spec.png` shows the layers, the drop (a vertical gap), the landings and the tail.
+- The critic's loudness curve should rise into the peak, dip at the drop, and fall to quiet at the end.
+- Too much energy below 200 Hz across the whole film means it's muddy: lower the arc or the bass.
+- Tell the person plainly that you checked the sound by measurement and that they should listen.

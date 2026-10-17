@@ -1,175 +1,162 @@
 <div align="center">
 
-<img src="docs/media/teaser.gif" width="400" alt="Slate teaser: an S made of dots, mosaics and stripes cutting on the beat, then curved horizons, a coral title card and the Slate logo">
+<img src="docs/media/mowr.gif" width="720" alt="Sheets of paper drift through a dark, warm space, stop, and settle into one neat pile; the Mowr app lands on top">
 
 # Slate
 
-**Launch films with taste, written as code.**
+**Original launch films, written as code.**
 
-Claude skills plus a Remotion studio that turn a product brief into a launch video, feature announcement, teaser or ad,<br>with a score composed from the edit and a critic that watches every cut before you do.
+Claude skills plus a frame-accurate browser film engine. Give Slate a product, and it finds an idea in the product itself, designs style frames, writes the film as a web page, renders it with motion blur and grain, scores it from the edit, and checks it for sync, readability, loudness and originality before you watch it.
 
-[Watch the teaser](docs/media/slate-teaser.mp4) · [Watch the launch film](docs/media/slate-launch.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [Spec reference](docs/spec.md)
+[Watch the example film](docs/media/mowr-one-quiet-place.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [The film engine](skills/film-engine/SKILL.md)
 
 </div>
 
 ---
 
-## What it makes
+## The example: Mowr, "One quiet place"
 
-Both films below were written as a JSON spec, rendered, scored and critiqued by Slate itself. Everything you see and hear is generated: no stock footage, no stock music.
+A 52-second launch film for [Mowr](https://github.com/mowfxy/mowr), a calm, local-first workspace for study and documents. It is set in Mowr's own typefaces, Mowafy Serif and Mowafy Sans, and uses the app's real screens.
 
-<table>
-<tr>
-<td width="50%" valign="top">
+<a href="docs/media/mowr-one-quiet-place.mp4"><img src="docs/media/mowr-frames.jpg" alt="Eight frames from the film: scattered papers, the settled pile, the Mowr home screen, files landing in a subject, a flashcard, a typeset report, a 3D surface, and the Mowr mark"></a>
 
-**Brand teaser** · 1:1 · 18.8s · 128 BPM<br>
-<sub>One idea (the S is made of everything), 3-frame cuts locked to the beat, a planet-edge montage with one line of type, a title hit, and a logo that bookends the opening horizon.</sub>
+| | |
+|---|---|
+| **The idea** | Everything you work on, scattered, settles into one quiet place. It's Mowr's own promise ("one quiet place for the work you bring to an AI") taken literally. |
+| **The move** | *The landing.* Things drift, stop, and settle where they belong. It happens at every scale: the pile, files dropping into a subject, a flashcard deck, a report, the folders of a file path. At the end, four sheets land as the four petals of Mowr's mark. |
+| **The sound** | Felt piano and a warm pad at 84 BPM. Paper rustles while things drift, the music stops dead when they freeze, and each landing plays the next note of a rising run. A rolled chord rings out on the mark. |
+| **Rejected** | A typed prompt that pulls back from a close-up, and a montage of abstract materials, because both are reference moves. Also a feature list over screenshots, because it had no idea. |
 
-<a href="docs/media/slate-teaser.mp4"><img src="docs/media/teaser-sheet.jpg" alt="Teaser contact sheet"></a>
-
-[`examples/slate-teaser/spec.json`](examples/slate-teaser/spec.json)
-
-</td>
-<td width="50%" valign="top">
-
-**Product launch** · 16:9 · 61s · 96 BPM<br>
-<sub>Typed headlines, a prompt box that pulls back as it types, kinetic brackets, camera moves through real UI captures on a space backdrop, a wall of outputs, and a held logo.</sub>
-
-<a href="docs/media/slate-launch.mp4"><img src="docs/media/launch-sheet.jpg" alt="Launch film contact sheet"></a>
-
-[`examples/slate-launch/spec.json`](examples/slate-launch/spec.json)
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-<img src="docs/media/launch.gif" width="720" alt="Launch film excerpt: a prompt is typed into a prompt box while the camera pulls back, then kinetic bracket type">
-</div>
+Source: [`films/mowr-launch/`](films/mowr-launch). It's one HTML page, one stylesheet and one script, all written for this film.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    A[Brief + brand] --> B[Director<br><sub>treatment, one idea, beat sheet</sub>]
-    B --> C[spec.json<br><sub>every scene in beats</sub>]
-    C --> D[timeline.mjs<br><sub>frames, cuts, sound events</sub>]
-    D --> E[Remotion studio<br><sub>picture</sub>]
-    D --> F[score.py<br><sub>music + SFX, −14 LUFS</sub>]
-    E --> G[MP4]
-    F --> G
-    G --> H{Critic<br><sub>measures + looks</sub>}
-    H -- fix the spec --> C
-    H -- pass --> I[Deliver]
+    A[Product<br><sub>site, app, brand</sub>] --> B[Three concepts<br><sub>from the product's own material</sub>]
+    B --> G{Originality gate<br><sub>do-not-copy list</sub>}
+    G --> C[Style frames<br><sub>stills first</sub>]
+    C --> D[Film page<br><sub>HTML · CSS · GSAP · Three.js</sub>]
+    D --> E[Renderer<br><sub>Chromium, frame by frame,<br>motion blur, grain</sub>]
+    D --> F[score.py<br><sub>arc + cues → music + foley,<br>−14 LUFS</sub>]
+    E --> H[MP4]
+    F --> H
+    H --> I{Critic<br><sub>sync · reading · loudness ·<br>originality · rubric</sub>}
+    I -- fix --> D
+    I -- pass --> J[Deliver]
 ```
 
-One timeline drives both picture and sound, so they cannot drift: cuts land on the beat grid, every typed letter gets a key tap, every click gets a click, the riser builds into the title and the last chord rings out on the logo.
+**A film is a web page.** Each film is written new for its idea: CSS 3D, SVG, canvas, WebGL, real web fonts, blend modes and filters, animated on one paused [GSAP](https://gsap.com) timeline. The renderer seeks that timeline to the exact time of every frame and captures it in headless Chromium. It renders four subframes per frame for motion blur and encodes with ffmpeg. Nothing depends on the wall clock, so every frame renders the same way twice.
+
+**There are no templates.** Slate's first version shipped ready-made scenes modeled on its reference films, and every film it made became a remix of them. Slate now gives Claude primitives and principles: camera, depth, landing and type helpers, a taste guide that explains *why* great launch films work, and a list of the references' signature moves that are off-limits.
+
+**One manifest drives picture and sound.** Scenes, the energy arc and every sound cue (a landing, a click, a page flip) are declared in the film. The score is composed from them, so sounds land on the frame.
 
 ## The taste
 
-The rules come from frame-by-frame study of five top-tier launch films (cut detection, loudness, tempo, onset sync, contact sheets). The short version:
-
 | | |
 |---|---|
-| **One idea** | Say it in five words before writing anything. Every shot serves it. |
-| **Shape** | Breathe → build → peak → land. The last quarter is the calmest. Bookend the opening frame. |
-| **Pace in beats** | Scenes are whole beats; montage shots are 1 → ¼ beat, accelerating. Fast cuts need a repeated shape. |
-| **Type** | Two voices max. ≤ 7 words, centered, one accented word. Restraint reads as confidence. |
-| **Camera, not transitions** | Push in on the one control that matters, then pull back to reveal. Match cuts over wipes. |
-| **Sound** | The edit is the score. Drop before the hit, resolve on the logo, master to −14 LUFS. |
+| **The idea comes from the product** | Take its promise literally, use its own material, or show the tension it resolves. If a competitor's logo would fit at the end, keep looking. |
+| **One move, everywhere** | Pick one motion from the idea's verb and use it at every scale: how type enters, how UI arrives, how the logo forms. |
+| **Shape** | Breathe, build, peak, land. The biggest moment is often when everything stops. End where you started, changed. |
+| **Image** | The real UI, real fonts, light, depth, material, grain, motion blur, and one focal point per frame. |
+| **Type** | The brand's typefaces, at most 7 words, sized with restraint, moving with the film's move. |
+| **Sound** | The edit is the score. Silence before the moment, a resolve on the mark, −14 LUFS. |
 
-Full guide: [`skills/video-taste`](skills/video-taste/SKILL.md), with [archetype recipes](skills/video-taste/references/archetypes.md) and [measured benchmarks](skills/video-taste/references/benchmarks.md).
+Full guide: [`skills/video-taste`](skills/video-taste/SKILL.md), with [measured benchmarks](skills/video-taste/references/benchmarks.md) and the [do-not-copy list](skills/video-taste/references/do-not-copy.md).
 
 ## Quick start
 
 ```bash
 git clone https://github.com/mowfxy/slate && cd slate
-cd studio && npm install && cd ..
+(cd engine && npm install)
 python3 -m pip install -r requirements.txt     # numpy, scipy (+ librosa for reference study)
 
-cd studio
-node scripts/render.mjs ../examples/slate-teaser
-# ▸ Slate · teaser: 18.75s, 450 frames @ 24fps, 5 scenes, 128 BPM
-# ▸ score: … mastered to -14.0 LUFS
-# ▸ video -> ../out/slate-teaser.mp4
-# **PASS** · 13 passed, 0 warnings, 0 failed
+node engine/render.mjs films/mowr-launch --stills 4,9,20   # style frames → films/mowr-launch/build/stills
+node engine/render.mjs films/mowr-launch                   # → out/mowr-launch.mp4, score, critic report
+node engine/serve.mjs                                      # live preview with a scrubber at localhost:4173/films/mowr-launch/
 ```
 
-Needs Node 20+, Python 3.10+ and ffmpeg. Remotion downloads its own headless Chrome, or set `SLATE_CHROME` to an existing Chromium.
+You need Node 20+, Python 3.10+, ffmpeg and a Chromium. Slate finds Playwright's browser cache on its own, or you can set `SLATE_CHROME`.
 
 ## Use it with Claude
 
-Slate is a Claude Code plugin. Add it, then ask for a video:
+Slate is a Claude Code plugin:
 
 ```
 /plugin marketplace add mowfxy/slate
 /plugin install slate@slate
 ```
 
-> Make a 30 second launch film for our new Sync feature. 16:9, calm but confident, here's our site: https://…
+> Make a 40 second launch film for our new offline mode. 16:9, here's the repo: https://…
 
-The **launch-video** skill runs the whole loop: read the product, write a treatment with one idea and a beat sheet, capture the UI, write the spec, check stills, render, critique, fix, deliver. Working inside this repo, the skills load from `.claude/skills` automatically.
+The **launch-video** skill directs it. It studies the product, pitches three concepts and rejects any that copy a reference or would fit any brand. Then it builds style frames, writes the film, renders, critiques and fixes until the film passes.
 
 | Skill | What it does |
 |---|---|
-| [`launch-video`](skills/launch-video/SKILL.md) | The director: brief → treatment → spec → render → critique → deliver |
-| [`video-taste`](skills/video-taste/SKILL.md) | Structure, pacing, type, motion, color and sound rules, adapted per product |
-| [`remotion-kit`](skills/remotion-kit/SKILL.md) | The scene types and how to extend the studio safely |
-| [`sound-design`](skills/sound-design/SKILL.md) | Generated score, supplied tracks on the beat grid, SFX, mastering |
-| [`video-critic`](skills/video-critic/SKILL.md) | Automated checks plus a 7-line taste rubric for the contact sheet |
-| [`reference-study`](skills/reference-study/SKILL.md) | Learn a new style from videos you like |
+| [`launch-video`](skills/launch-video/SKILL.md) | The director: product → three concepts → style frames → film → render → critique → deliver |
+| [`video-taste`](skills/video-taste/SKILL.md) | Principles for idea, shape, pacing, type, image and sound, plus the do-not-copy list |
+| [`film-engine`](skills/film-engine/SKILL.md) | The runtime API, primitives (camera, depth, landing, masks, 3D, WebGL) and render options |
+| [`sound-design`](skills/sound-design/SKILL.md) | The generated score (felt, glass, pulse), foley cues, supplied tracks, mastering |
+| [`video-critic`](skills/video-critic/SKILL.md) | Automated checks, including originality, plus an 8-line taste rubric |
+| [`reference-study`](skills/reference-study/SKILL.md) | Learn principles from videos you like and fingerprint them so renders never copy them |
 
-## A spec, briefly
+## A film, briefly
 
-```jsonc
-{
-  "meta": {"title": "Fieldnote · Sync", "archetype": "demo", "width": 1920, "height": 1080, "fps": 30, "bpm": 96},
-  "brand": {"name": "Fieldnote", "accent": "#2f6bff", "ink": "#111111", "paper": "#faf8f3", "wordmark": "sans", "mark": "none"},
-  "scenes": [
-    {"type": "typeTitle", "beats": 5, "text": "Introducing *Sync*"},
-    {"type": "promptBox", "beats": 8, "prompt": "Keep my notes in step on every device", "chips": ["Fieldnote"]},
-    {"type": "bracketTitle", "beats": 6, "text": "From [draft] to (everywhere)"},
-    {"type": "uiShot", "beats": 10, "image": "assets/app.png", "backdrop": "space",
-     "camera": [{"t": 0, "zoom": 1}, {"t": 0.6, "zoom": 1}, {"t": 1.6, "x": 0.3, "y": 0.25, "zoom": 2}],
-     "cursor": [{"t": 3.5, "x": 0.8, "y": 0.6, "click": true}]},
-    {"type": "logoEnd", "beats": 8, "tagline": "Everything in step", "footnote": "Available today"}
-  ]
-}
+```js
+import {film, split} from 'slate';
+const F = film({fps: 30, width: 1920, height: 1080, bpm: 84});
+const {tl, b} = F;                                    // one paused timeline; b(n) = seconds at beat n
+
+F.scene('quiet', {start: b(15.5), end: b(20.5), kind: 'type', words: 'Give it one quiet place.'}, (tl, el) => {
+  const words = split(el.querySelector('h1'), 'words');
+  tl.fromTo(words, {y: -34, opacity: 0, filter: 'blur(12px)'},  // words land, like everything else in this film
+                   {y: 0, opacity: 1, filter: 'blur(0px)', duration: 1, stagger: 0.1, ease: 'power3.out'});
+});
+F.cue('drop', b(11.5)).cue('thud', b(12));            // the music stops dead, then the pile begins to settle
+F.music({key: 'Eb', style: 'felt', arc: [[0, 0.15], [b(11.4), 0.6], [b(11.5), 0], [b(34), 0.65], [b(70), 0]]});
+F.post({grain: 5, vignette: 0.35, blur: 4});
+F.end(b(70));
+await F.ready();
 ```
-
-Nine scene types (`logo`, `typeTitle`, `bracketTitle`, `promptBox`, `uiShot`, `montage`, `cardGrid`, `titleCard`, `logoEnd`), fifteen procedural materials, glyph / lens / horizon masks, camera and cursor keyframes. Full reference: [`docs/spec.md`](docs/spec.md).
 
 ## The critic
 
-Every render ends with a report measured from the file itself, plus a contact sheet for Claude to look at:
+Every render ends with a report measured from the file itself, plus a contact sheet for Claude to score:
 
 ```
-**PASS** · 13 passed, 0 warnings, 0 failed
-1080×1080 · 24 fps · 18.75s · 128 BPM · 49 cuts · median shot 0.21s
+**PASS** · 13 passed, 1 warnings, 0 failed
+1920×1080 · 30 fps · 52.50s · 84 BPM
 
-✅  Cuts on the beat           49/49 detected cuts within a frame of the ¼-beat grid (100%)
-✅  The ending lands           0 cuts in the final 15%; cuts per quarter [7, 23, 18, 1]
-✅  Logo holds                 logo on screen 3.28s (≥ 2.5s)
-✅  Every title is readable    all titles held long enough
-✅  Loudness on target         -14.0 LUFS integrated (target -14.0), LRA 5.1 LU
-✅  Sound resolves at the end  last 0.25s at -50.6 dBFS
+✅  Cuts on the beat              every detected cut within a frame of the ¼-beat grid
+✅  Logo holds                    logo on screen 7.86s (≥ 2.5s)
+✅  Every line is readable        all words held long enough
+✅  Nothing sits frozen           motion everywhere it should be
+✅  Loudness on target            -13.8 LUFS integrated (target -14.0), LRA 4.8 LU
+✅  Sound resolves at the end     last 0.25s at -42.8 dBFS
+✅  Original (not a reference)    0/84 frames close to a reference (0.0%)
+⚠️  Planned cuts are visible      1/9: cuts between two dark frames are too soft for the detector
 ```
 
-The first launch-film render failed on five titles that were not held long enough to read; the spec was fixed and re-rendered until it passed. That loop is the point. The critic's numbers are a floor: Claude still scores the contact sheet against the taste rubric before delivering.
+The first render of the Mowr film failed: three of the closing lines weren't on screen long enough to read. They got more beats, and the next render passed.
+
+The originality check compares frames against fingerprints of the reference films: layout hashes and color histograms, never the footage itself. On Slate's first launch film, which rebuilt reference shots, it flags 29% of the frames.
 
 ## Repo layout
 
 ```
-skills/            six Claude skills (the plugin)
-studio/            Remotion project: components, timeline, render + capture scripts, tests
-tools/             score.py, critic.py, analyze_reference.py, beatgrid.py (Python)
-examples/          slate-launch (demo) and slate-teaser (teaser): spec, UI mocks, captures
-docs/              spec reference and README media
+engine/      runtime (slate.js), renderer, preview server, tests
+films/       one folder per film: index.html, film.css, film.js, assets/
+skills/      six Claude skills (the plugin)
+tools/       score.py, critic.py, originality.py, analyze_reference.py, beatgrid.py
+docs/media/  README media
 ```
 
-Tests: `cd studio && npm test && npm run typecheck`, and `python3 -m unittest tools/test_tools.py`.
+Tests: `node --test engine/test/*.test.mjs` (or `cd engine && npm test`) and `python3 -m unittest tools/test_tools.py`.
 
 ## Notes
 
-- Slate renders with [Remotion](https://www.remotion.dev). Remotion is free for individuals and companies of up to three people; larger companies need a [company license](https://www.remotion.dev/license).
-- Use footage, music and logos you have rights to. The reference films that shaped the taste guide are described in the benchmarks, not included.
+- Built on [GSAP](https://gsap.com) (free for commercial use), [Three.js](https://threejs.org) (MIT), [Playwright](https://playwright.dev) (Apache 2.0) and ffmpeg. There's no per-seat render license.
+- The Mowr film uses Mowr's own screenshots and logo (Mowr is by the same author, [MIT licensed](https://github.com/mowfxy/mowr)), and Mowafy Serif and Sans under the SIL Open Font License ([`films/mowr-launch/assets/fonts/Mowafy-OFL.txt`](films/mowr-launch/assets/fonts/Mowafy-OFL.txt)).
+- Use footage, music and logos you have the rights to. The reference films that shaped the taste guide are described and fingerprinted, never included.
+- The score is synthesized. A licensed track can replace it with `--music track.wav --offset <downbeat>`.

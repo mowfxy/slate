@@ -1,0 +1,14 @@
+{
+  "name": "slate-engine",
+  "private": true,
+  "type": "module",
+  "description": "Renders HTML/CSS/JS films frame by frame: GSAP timelines seeked per frame, captured by headless Chromium, encoded by ffmpeg.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "gsap": "3.15.0",
+    "playwright-core": "1.56.1",
+    "three": "0.186.1"
+  }
+}

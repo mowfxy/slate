@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Beat grid for a supplied music track, so the edit can be written in beats.
 
-Prints the tempo, the first strong beat, and the spec fields to use. With
+Prints the tempo, the first strong beat, and the render flags to use. With
 --json, writes the full beat list. Needs librosa.
 
 usage: beatgrid.py track.mp3 [--json beats.json]
@@ -33,8 +33,7 @@ def main():
     offset = float(beats[phase]) if len(beats) > phase else 0.0
     bpm = round(tempo, 2)
     print(f"tempo {bpm} BPM · {len(beats)} beats · first downbeat at {offset:.3f}s · {len(y) / sr:.1f}s long")
-    print('spec fields:')
-    print(json.dumps({'meta': {'bpm': bpm}, 'audio': {'music': a.track, 'offset': round(offset, 3)}}, indent=2))
+    print(f"use film({{bpm: {bpm}}}) and render with: --music {a.track} --offset {offset:.3f}")
     if a.json:
         json.dump({'bpm': bpm, 'offset': offset, 'beats': beats.tolist()}, open(a.json, 'w'), indent=2)
 

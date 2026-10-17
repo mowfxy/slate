@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """The critic: watches a render like an editor and says what to fix.
 
-Measures the rendered file (not the plan) and checks it against the timeline
-and the taste rules in skills/video-taste. Writes report.md, report.json and
-contact.jpg. Exit code 1 when any check fails, so it can gate a render loop.
+Measures the rendered file (not the plan) and checks it against the film's
+manifest (engine/render.mjs writes build/manifest.json) and the taste rules in
+skills/video-taste. Also runs the originality check against the reference
+fingerprints. Writes report.md, report.json and contact.jpg. Exit code 1 when
+any check fails, so it can gate a render loop.
 
-usage: critic.py out/film.mp4 --timeline build/timeline.json --out build/critic [--lufs -14]
+usage: critic.py out/film.mp4 --manifest build/manifest.json --out build/critic [--lufs -14] [--refs fingerprints.json]
 """
 import argparse
 import json
@@ -17,8 +19,10 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import vidlib as V  # noqa: E402
 
-TEXT_SCENES = {'typeTitle', 'bracketTitle', 'titleCard', 'logoEnd', 'promptBox'}
-HOLD_OK = {'typeTitle', 'bracketTitle', 'titleCard', 'logoEnd', 'logo'}
+HOLD_OK = {'type', 'logo'}
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_REFS = os.path.join(ROOT, 'skills/video-critic/references/fingerprints.json')
+import originality  # noqa: E402
 
 
 def check(results, name, ok, detail, severity='fail'):
@@ -28,14 +32,13 @@ def check(results, name, ok, detail, severity='fail'):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('video')
-    ap.add_argument('--timeline', required=True)
+    ap.add_argument('--manifest', required=True)
+    ap.add_argument('--refs', default=DEFAULT_REFS, help='reference fingerprints (originality.py fingerprint)')
     ap.add_argument('--out', default='critic')
     ap.add_argument('--lufs', type=float, default=-14.0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    tl = json.load(open(a.timeline))
-    spec_dir = os.path.dirname(os.path.dirname(os.path.abspath(a.timeline)))
-    spec = json.load(open(os.path.join(spec_dir, 'spec.json'))) if os.path.exists(os.path.join(spec_dir, 'spec.json')) else {'scenes': []}
+    tl = json.load(open(a.manifest))
     info = V.probe(a.video)
     fps = info['fps']
     frame = 1 / fps
@@ -43,7 +46,7 @@ def main():
     R = []
 
     # 1. Duration and format match the plan.
-    check(R, 'Duration matches the timeline', abs(info['duration'] - tl['duration']) <= 2 * frame + 0.05,
+    check(R, 'Duration matches the manifest', abs(info['duration'] - tl['duration']) <= 2 * frame + 0.05,
           f"{info['duration']:.2f}s rendered vs {tl['duration']:.2f}s planned")
     check(R, 'Frame size and rate', (info['width'], info['height']) == (tl['width'], tl['height']) and abs(fps - tl['fps']) < 0.01,
           f"{info['width']}×{info['height']} @ {fps:g}fps")
@@ -53,7 +56,7 @@ def main():
     for c in V.cuts(a.video, threshold=0.15):
         if not detected or c - detected[-1] > 2.5 * frame:  # one cut, not its entrance animation
             detected.append(c)
-    planned = sorted({round(e['t'], 4) for e in tl['events'] if e['type'] == 'cut'})
+    planned = sorted({round(e['t'], 4) for e in tl['events'] if e['type'] == 'cut' and e['t'] > 0})
     sub = beat / 4
     # frames quantize time (allow one frame); an animated entrance can trip the detector a few frames after its cut
     on_grid = [c for c in detected
@@ -70,23 +73,23 @@ def main():
     quarters = [sum(1 for c in detected if q * dur / 4 <= c < (q + 1) * dur / 4) for q in range(4)]
     tail = [c for c in detected if c > dur * 0.85]
     check(R, 'The ending lands', len(tail) <= max(2, 0.15 * dur), f"{len(tail)} cuts in the final 15%; cuts per quarter {quarters}", 'warn')
-    last = tl['scenes'][-1]
-    if last['type'] == 'logoEnd':
-        hold = last['end'] - last['start']
+    logos = [s for s in tl['scenes'] if s['kind'] == 'logo']
+    if logos:
+        hold = logos[-1]['end'] - logos[-1]['start']
         check(R, 'Logo holds', hold >= 2.5, f"logo on screen {hold:.2f}s (≥ 2.5s)")
 
-    # 4. Every title is on screen long enough to read: typed lines hold max(1s, words/4 + 0.4s) after the last letter.
+    # 4. Every scene with words is on screen long enough to read them: words/3.5 + 0.6s, at least 1.2s.
     slow = []
-    for r in tl['reading']:
-        sc = tl['scenes'][r['scene']]
-        if sc['type'] not in TEXT_SCENES or not r['words']:
+    for s in tl['scenes']:
+        words = len(s.get('words', '').split())
+        if not words:
             continue
-        typed = sc.get('typedAt', 0) or 0
-        need = typed + max(1.0, r['words'] / 4 + 0.4) if sc['type'] in ('typeTitle', 'bracketTitle') else r['words'] / 3 + 0.5
-        if r['seconds'] + 1e-3 < need:
-            slow.append(f"scene {r['scene']} needs {need:.1f}s, has {r['seconds']:.1f}s")
-    check(R, 'Every title is readable', not slow, '; '.join(slow) or 'all titles held long enough')
-    long_text = [f"scene {i}" for i, s in enumerate(spec.get('scenes', [])) if s.get('text') and len(s['text'].replace('*', '').split()) > 9]
+        need = max(1.2, words / 3.5 + 0.6)
+        have = s['end'] - s['start']
+        if have + 1e-3 < need:
+            slow.append(f"{s['name']} needs {need:.1f}s, has {have:.1f}s")
+    check(R, 'Every line is readable', not slow, '; '.join(slow) or 'all words held long enough')
+    long_text = [s['name'] for s in tl['scenes'] if s['kind'] == 'type' and len(s.get('words', '').split()) > 9]
     check(R, 'Short lines (≤ 9 words)', not long_text, ', '.join(long_text) or 'all lines short', 'warn')
 
     # 5. No accidental black, no dead air on screen.
@@ -95,9 +98,9 @@ def main():
     frozen = []
     for s, e in V.frozen_segments(a.video, 2.5):
         mid = (s + e) / 2
-        sc = next((x for x in tl['scenes'] if x['start'] <= mid < x['end']), None)
-        if sc and sc['type'] not in HOLD_OK:
-            frozen.append(f"{s:.1f}–{e:.1f}s in {sc['type']}")
+        here = [x for x in tl['scenes'] if x['start'] <= mid < x['end']]
+        if here and not any(x['kind'] in HOLD_OK for x in here):
+            frozen.append(f"{s:.1f}–{e:.1f}s in {here[-1]['name']}")
     check(R, 'Nothing sits frozen', not frozen, ', '.join(frozen) or 'motion everywhere it should be', 'warn')
 
     # 6. Sound: loudness on target, peaks safe, and the last moment is quiet.
@@ -113,6 +116,17 @@ def main():
     else:
         check(R, 'Has a soundtrack', False, 'no audio stream')
         curve = []
+
+    # 7. Originality: no stretch of the film may look like a reference film.
+    if a.refs and os.path.exists(a.refs):
+        o = originality.check(a.video, json.load(open(a.refs)))
+        ts = [n['t'] for n in o['near']]
+        worst = max([sum(1 for u in ts if t <= u < t + 2) for t in ts] or [0])
+        detail = f"{len(o['near'])}/{o['frames']} frames close to a reference ({100 * o['share']:.1f}%)"
+        if o['near']:
+            n = min(o['near'], key=lambda x: x['hamming'])
+            detail += f"; closest {n['t']}s ~ {n['ref']} @ {n['ref_t']}s"
+        check(R, 'Original (not a reference)', o['share'] <= 0.05 and worst < 3, detail)
 
     sheet = V.contact_sheet(a.video, os.path.join(a.out, 'contact.jpg'))
     fails = [r for r in R if r['status'] == 'fail']
@@ -133,10 +147,10 @@ def main():
         lo = min(curve)
         lines += [f"{i * max(0.5, dur / 40):6.1f}s {c:6.1f} {V.bar(c - lo, max(curve) - lo or 1)}" for i, c in enumerate(curve)]
     lines += ['```', '', f"![contact sheet]({os.path.basename(sheet)})", '',
-              'Now look at contact.jpg yourself: is there one idea, does every frame have one focal point, does the type breathe, does the end land?']
+              'Now look at contact.jpg yourself and score it with the rubric in skills/video-critic.']
     open(os.path.join(a.out, 'report.md'), 'w').write('\n'.join(lines) + '\n')
     json.dump({'video': a.video, 'pass': not fails, 'checks': R, 'cuts': detected, 'loudness_curve': curve}, open(os.path.join(a.out, 'report.json'), 'w'), indent=2)
-    print('\n'.join(lines[:len(R) + 7]))
+    print('\n'.join(lines[:len(R) + 8]))
     print(f"▸ critic -> {a.out}/report.md")
     return 1 if fails else 0
 

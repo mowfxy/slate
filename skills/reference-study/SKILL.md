@@ -1,11 +1,11 @@
 ---
 name: reference-study
-description: Learn a visual and sonic style from example videos someone shares (competitor launches, films they love, their past videos) and turn it into notes the director can follow. Use when given reference videos or asked to match a look.
+description: Learn principles from example videos someone shares (competitor launches, films they love, their past videos): measure them, write down why they work and what is theirs alone, and fingerprint them so renders never copy them. Use when given reference videos or asked to match a look.
 ---
 
 # Study references
 
-Taste grows from examples. When someone shares videos they like, measure them, look at them, and write down what to steal.
+Taste grows from examples, but a film that copies its examples has no taste. When someone shares videos they like, measure them, look at them, and write down why they work, which is the part you can reuse.
 
 ## 1. Measure
 
@@ -33,10 +33,21 @@ Fill in the Notes section of each `analysis.md`:
 - **Motion:** camera behavior, the repeated shape, transitions.
 - **Color:** the palette (pick hexes from frames with `ffmpeg -ss t -i ref.mp4 -frames:v 1 -vf scale=1:1 -f rawvideo -pix_fmt rgb24 - | xxd`).
 - **Sound:** tempo, layers, where it drops, how it ends, loudness.
-- **Steal this:** the two or three moves worth reusing, each mapped to a Slate scene type or a new component.
+- **Why it works:** the two or three principles underneath (for example "one fixed shape lets fast cuts read"), never the moves themselves.
+- **Signature moves:** the things only this film does. These go on the do-not-copy list.
 
-Then write a short `references/<project>/style.md` that the director reads alongside `video-taste`. Where it conflicts with the general guide, the project style wins.
+Then write a short `references/<project>/style.md` that the director reads alongside `video-taste`: the principles to apply, and the signature moves to avoid. Where it conflicts with the general guide, the project style wins.
 
-## 4. Rights
+## 4. Protect against copying
 
-References are for learning structure, pacing and craft. Never reuse their footage, music, logos or exact copy. If a move needs a new component, build it (see `remotion-kit`).
+Fingerprint the references so the critic flags renders that come too close:
+
+```bash
+python3 tools/originality.py fingerprint ref1.mp4 ref2.mp4 --names client-ref-1 client-ref-2 --out skills/video-critic/references/fingerprints.json
+```
+
+Add each film's signature moves to `skills/video-taste/references/do-not-copy.md`.
+
+## 5. Rights
+
+References are for learning structure, pacing and craft. Never reuse their footage, music, logos, copy or signature moves. Fingerprints and written notes can be kept; the films themselves should not be committed.
