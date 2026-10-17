@@ -21,7 +21,7 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
   const waits = [];
   const typers = [];
   let duration = null;
-  let music = {key: 'D', style: 'glass'};
+  let music = null; // no default sound: every film chooses its own (see skills/sound-design)
   let post = {grain: 0, vignette: 0, blur: 1, shutter: 0.5};
   let notes = {};
   const missing = [];
@@ -106,7 +106,7 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
     wait(promise) { waits.push(promise); return F; },
 
     /** Score settings: key, style (see tools/score.py), plus anything the scorer understands. */
-    music(m) { music = {...music, ...m}; return F; },
+    music(m) { music = {...(music || {}), ...m}; return F; },
 
     /** Finishing: grain (0..20), vignette (0..1), blur (subframes per frame, 1 = off), shutter (0..1 of a frame). */
     post(p) { post = {...post, ...p}; return F; },

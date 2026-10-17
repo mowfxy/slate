@@ -1,27 +1,51 @@
 ---
 name: sound-design
-description: Score, sound effects and mastering for Slate films - the generated score that follows the film's energy arc and cues, using a supplied track on the beat grid, foley cues, and loudness targets per platform. Use when choosing music, placing sound cues, fixing sync, or when a render sounds wrong.
+description: Score, sound effects and mastering for Slate films - choosing the sound from the product and the film's form, eight distinct score styles and five endings, using a supplied track on the beat grid, foley cues, and loudness targets per platform. Use when choosing music, placing sound cues, fixing sync, or when a render sounds wrong.
 ---
 
 # Sound design
 
 Sound is half the film. `tools/score.py` reads `build/manifest.json` and writes `music.wav`, `sfx.wav` and the mastered `mix.wav`. `engine/render.mjs` runs it while frames render.
 
+## Choosing the sound
+
+Decide in this order, and write each answer in `F.notes({sound})`:
+1. **What does the product sound like?** Its clicks, keys, pages, shutter, notification. If those sounds can carry the film, use `room` and no music.
+2. **What does the film's form need?** (See `video-taste` §3.) A take wants one steady instrument; a settle wants a score that thins out; a slow reveal wants a swell with no rhythm; only a trailer wants a build and a stop.
+3. **Which ensemble, and why this one?** Never reuse the last film's style and ending without a reason.
+
 ## The generated score
 
-Set it in the film with `F.music({key, style, arc})`. Tempo is the film's `bpm`.
+Set it in the film with `F.music({key, style, arc, end})`. Tempo is the film's `bpm`. Each style is its own ensemble and its own way of moving.
 
-| Style | Sound | For |
+| Style | Sound | Moves by | For |
+|---|---|---|---|
+| `solo` | One felt piano, rubato: a rolled left hand a hair late, a melody in breaths, a rest every fourth phrase | Touch and density; never adds instruments | Personal, considered, crafted products. 60–90 BPM |
+| `strings` | A bowed chorale: cello on the root, three voices that move to the nearest note | The bow: it swells and recedes. No rhythm | Serious, premium, a story, a slow reveal. 60–80 BPM |
+| `tape` | Electric piano comping on a swung grid, a round bass, brushes, all through worn tape | A groove in one gear; a kick and a walk-up appear when energy is up | Everyday, relaxed, consumer, call-and-response demos. 80–96 BPM |
+| `wood` | Marimba ostinato accented 3+3+2, a low bar, a shaker when it lifts | Accents only when quiet, the full figure when up | Playful, light, handmade. 100–124 BPM |
+| `felt` | Felt piano, a warm pad, a sub, brushes and a soft kick at high energy | Layers enter as energy rises | Calm, human products. 70–95 BPM |
+| `glass` | Bell plucks over a bright pad | Layers enter as energy rises | Precise tools. 90–110 BPM |
+| `pulse` | Minor pulse, kick on every beat, claps at the peak | Layers enter as energy rises | Trailers, ads that want energy. 115–135 BPM |
+| `room` | No music. Foley and room tone only | The film's own actions | When the product's own sounds are the best score |
+
+- **`gain`** sets the music against the foley (default 1). Lower it when the product's own sounds lead, so the film doesn't jump in level when the music enters.
+- **`room`** raises the room tone (default 1) and adds air, for films where stretches have no music. Long stretches of near silence read as broken audio; a lived-in room reads as a choice.
+- **The arc** (`[[t, energy], ...]`, 0–1) is the score's dynamics. It doesn't have to rise to the end: a flat arc is a steady score, a falling arc is a settle, a hump is a swell that recedes.
+- **The ending** (`end`) is chosen per film. It plays from the `resolve` cue:
+
+| `end` | What happens | Feels like |
 |---|---|---|
-| `felt` | Felt piano (stretched partials, unison strings, hammer), a warm analog pad, a sub, brushes and a soft kick at high energy | Calm, human products: study, writing, notes, wellbeing. 70–95 BPM |
-| `glass` | Bell plucks over a bright pad | Precise tools, developer products, demos. 90–110 BPM |
-| `pulse` | Minor pulse, kick on every beat, claps on 2 and 4 at the peak | Ads, teasers, energy. 115–135 BPM |
+| `ring` | A rolled chord on the style's own instrument rings out | Arrival, warmth |
+| `phrase` | The music finishes its phrase on the cue; nothing added, the room rings | Understatement, confidence |
+| `button` | The music stops on the cue with one short note in octaves | Wit, a full stop |
+| `fade` | The music plays on under the end card and fades over `fadeLen` seconds (default 3) | It continues without you |
+| `cut` | The music stops dead on the cue; only room tone after | Starkness, a held breath that isn't let out |
 
-- **The arc** (`[[t, energy], ...]`, 0–1) drives the arrangement. Below 0.3 the piano is sparse. Rhythm enters above 0.55. The pad's filter opens with energy. Without an arc, scene energies are used.
-- **`drop`** stops the music dead until the next `thud` or `hit`, while the room keeps ringing. Use it once, before the film's biggest moment.
-- **`land`** cues play piano notes up a pentatonic scale (`i` of `n` picks the step). A cascade of landings becomes a rising run. `soft: true` for small things.
-- **`resolve`** plays a rolled open chord and a low tail over the logo. The last 0.6s fades to silence.
-- The mix gets a two-band convolution room, kick sidechain on the pad, glue compression, a soft clip, and two-pass loudness normalization, then a true-peak limiter so sharp transients don't clip once encoded.
+  Without a `resolve` cue the ending is always `fade`.
+- **`drop`** stops the music dead until the next `thud` or `hit`, while the room keeps ringing. It is a trailer device: use it only when the form calls for it, and never as the default lead-in to the logo.
+- **`land`** and **`hit`** play on the style's own instrument (piano, marimba, Rhodes, bells, strings), so a landing belongs to the score.
+- The mix gets a convolution room (larger for `solo` and `strings`), glue compression, a soft clip, and two-pass loudness normalization, then a true-peak limiter so sharp transients don't clip once encoded.
 
 ## Foley cues
 
@@ -30,7 +54,7 @@ Set it in the film with `F.music({key, style, arc})`. Tempo is the film's `bpm`.
 | `rustle` (`len`) | paper crinkle and air | paper, fabric, many things moving |
 | `land` | paper tap plus a piano note | anything settling into place |
 | `thud` (`soft`) | low bloom plus a tap | something heavy arriving, the end of a drop |
-| `swell` (`len`) | rising air | the build into a moment |
+| `swell` (`len`) | rising air | the build into a moment (sparingly) |
 | `whoosh` (`len`) | panned air | fast moves across the frame |
 | `flip` | a flick | cards and pages turning |
 | `clap` | a clapperboard: two hardwood strikes and a dry crack | two things meeting hard on the beat |
@@ -60,6 +84,6 @@ Use licensed or generated music only. Never pull a song from a video you were sh
 
 You can't listen, so look and measure:
 - `ffmpeg -i build/mix.wav -lavfi showspectrumpic=s=1600x500:scale=log:fscale=log spec.png` shows the layers, the drop (a vertical gap), the landings and the tail.
-- The critic's loudness curve should rise into the peak, dip at the drop, and fall to quiet at the end.
+- The critic's loudness curve should have the shape you chose: steady for a take, falling for a settle, a hump for a swell.
 - Too much energy below 200 Hz across the whole film means it's muddy: lower the arc or the bass.
 - Tell the person plainly that you checked the sound by measurement and that they should listen.

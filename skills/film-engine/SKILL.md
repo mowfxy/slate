@@ -39,9 +39,9 @@ F.scene('open', {start: 0, end: b(8), kind: 'world', energy: 0.3, words: ''}, (t
   tl.fromTo(el.querySelector('.thing'), {y: -40}, {y: 0, duration: 1});   // tl starts at the scene's start
 });
 F.cue('land', b(3.5), {i: 4, n: 12});    // a sound on the frame where it happens
-F.music({key: 'Eb', style: 'felt', arc: [[0, 0.2], [b(16), 0.7], [b(30), 0.2]]});
+F.music({key: 'Eb', style: 'strings', end: 'phrase', arc: [[0, 0.2], [b(16), 0.7], [b(30), 0.2]]});  // chosen per film; there is no default
 F.post({grain: 5, vignette: 0.35, blur: 4, shutter: 0.5});
-F.notes({idea: '…', motif: '…', rejected: ['…']});
+F.notes({idea: '…', motif: '…', form: '…', sound: '…', rejected: ['…']});
 F.end(b(32));
 await F.ready();
 ```
@@ -49,9 +49,10 @@ await F.ready();
 | Call | What it does |
 |---|---|
 | `F.scene(name, {start, end, kind, energy, words, cut}, build)` | Shows `[data-scene=name]` from start to end. `kind`: `world`, `type`, `product` or `logo` (the critic reads it). `words`: what must be readable while it's up. `cut: false` for overlays and invisible joins. |
-| `F.cue(type, t, extra)` | Sound event. Types: `land` (`i`, `n`, `soft`), `rustle`, `swell` (`len`), `drop` (the music stops until the next `thud`/`hit`), `thud`, `hit`, `resolve`, `whoosh` (`len`), `flip`, `click`, `key`, `tick`, `glint`, `pop`. |
+| `F.cue(type, t, extra)` | Sound event. Types: `land` (`i`, `n`, `soft`), `rustle`, `swell` (`len`), `drop` (the music stops until the next `thud`/`hit`; a trailer device), `clap` (`gain`), `thud`, `hit`, `resolve`, `whoosh` (`len`), `flip`, `click`, `key`, `tick`, `glint`, `pop`. |
 | `F.type(el, text, {at, cps, caret})` | Types text in with human rhythm and a key cue per letter. Returns the end time. Use it only when typing *is* the idea. |
 | `await F.footage(name)` | Loads `footage/<name>.json`: the clip's duration, `marks` (named moments) and `events` (every key press and click, with times). |
+| `F.music({style, key, arc, end, fadeLen})` | The score: style, key, dynamics over time and ending. Required: a film without it fails to score. See `sound-design`. |
 | `F.cueClip(clip, at, {from, to})` | Puts the clip's own key and click sounds on the film's timeline, for the part that plays from film time `at`. |
 | `F.audit()` | Lists layout problems in the current frame (the renderer calls it; see Layout below). |
 | `F.onFrame(fn(t))` | Runs every frame, for canvas and WebGL (render your Three.js scene here). |

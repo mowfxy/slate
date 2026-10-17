@@ -22,10 +22,14 @@ html, body { margin: 0; background: #000; }
 .shot .picture { position: absolute; left: 0; top: var(--bar-open); width: 1920px; height: 800px; overflow: hidden; background: #000; }
 .shot video, .shot .picture > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
 
+/* the picture fades to the ground as the sticks close */
+.dim { position: absolute; inset: 0; background: var(--ground); opacity: 0; }
+
 /* ---------- the sticks: each covers half the frame when shut */
 .bar { position: absolute; left: 0; width: 1920px; height: 540px; background: var(--bar); will-change: transform; }
-.bar.top { top: 0; transform: translateY(-540px); box-shadow: 0 1px 0 rgba(236, 235, 230, .06); }
-.bar.bottom { top: 540px; transform: translateY(540px); box-shadow: 0 -1px 0 rgba(236, 235, 230, .06); }
+.bar.top { top: 0; transform: translateY(-540px); }
+/* the bottom stick reaches 1px under the top one, so no hairline of the picture shows where they meet */
+.bar.bottom { top: 539px; height: 541px; padding-top: 1px; transform: translateY(540px); }
 /* the slug line in the bottom bar: what the footage is, and the film's own timecode */
 .slug { position: absolute; left: 160px; right: 160px; top: 0; height: 104px; display: flex; align-items: center; justify-content: space-between;
   font: 500 18px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); opacity: 0; }

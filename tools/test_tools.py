@@ -28,12 +28,21 @@ TL = {
 
 class ScoreTest(unittest.TestCase):
     def test_compose_length_and_silence_at_end(self):
-        for style in ('felt', 'pulse', 'glass'):
+        for style in [s for s in score.STYLES if s != 'room']:
             music = score.compose({**TL, 'music': {'key': 'D', 'style': style}})
             self.assertEqual(music.shape, (int(round(6.0 * score.SR)), 2))
             self.assertTrue(np.isfinite(music).all())
             self.assertGreater(np.abs(music).max(), 0.01)
             self.assertLess(np.abs(music[-50:]).max(), 1e-3)
+
+    def test_room_is_silent_and_endings_differ(self):
+        self.assertEqual(np.abs(score.compose({**TL, 'music': {'key': 'D', 'style': 'room'}})).max(), 0)
+        after = {}
+        for end in score.ENDINGS:
+            m = score.compose({**TL, 'music': {'key': 'D', 'style': 'solo', 'end': end}})
+            after[end] = np.sqrt((m[int(5.2 * score.SR):int(5.35 * score.SR)] ** 2).mean())
+        self.assertLess(after['cut'], 1e-4)  # dead after the resolve cue
+        self.assertGreater(after['ring'], after['phrase'])  # ring adds a chord, phrase only lets the room ring
 
     def test_drop_is_silent(self):
         music = score.compose({**TL, 'music': {'key': 'D', 'style': 'felt'}})

@@ -25,21 +25,37 @@ The test for an idea: could you swap in a competitor's logo at the end and the f
 
 Great films repeat one motion at every scale, so fast or varied images still read as one thought. Choose the film's move from the idea's verb (landing, folding, focusing, aligning, growing) and use it for everything: how type enters, how UI arrives, how scenes change, and how the logo forms. A film with one move feels designed. A film with five transitions feels like a template.
 
-## 3. Shape
+## 3. Form
 
-- **Breathe, build, peak, land.** Open with space (1–2s), build, peak just before the main line or the product reveal, then land slower than you started. The last quarter is the calmest.
-- **Contrast makes the peak.** A silence before a hit, stillness before motion, darkness before light. The biggest moment in a film is often the moment everything stops.
+Every film has a form: the way its pace and sound move from the first second to the last. Most AI films have one form, the trailer: it builds, cuts faster and faster, the music stops dead, the logo slams in. It works for a big launch, about once. As a habit it is the clearest sign a film was made by a template. Choose the form from the product and the occasion, before any shot, and write down why.
+
+| Form | Pace | Sound | Ends on | Right for |
+|---|---|---|---|---|
+| **The take** | A few long shots or one unbroken move, the same calm pace start to finish | One instrument, steady, no build | A held frame, the music finishing its phrase | Craft, premium, confidence. A product that doesn't need to shout |
+| **Call and response** | Claim, proof, claim, proof, at an even rhythm. The rhythm is the structure, not a ramp | A groove that stays in one gear | The last proof, then the name | Feature announcements, demos, changelogs |
+| **Settle** | Opens busy and cut fast (the problem), then each shot is longer than the one before, until it is still | Starts cluttered or rhythmic, thins out until one instrument or the room is left | Stillness and the room's air | Calm tools: focus, notes, wellbeing, anything that removes noise |
+| **Slow reveal** | One image, getting clearer the whole time. Few or no cuts | A drone or chorale that swells and recedes | The answer the image was hiding | Teasers, brands, a single idea |
+| **Loop** | Even, and the last frame flows into the first | A figure that repeats | The beginning | Habits, daily rituals, social clips that replay |
+| **Trailer** | Builds, cuts accelerate, stops dead, the name | Builds to a peak, a silence, a hit | A slam, then the logo | A big, loud launch, when the energy is the message. Never twice in a row |
+
+- **Decide the last second first.** It is what people remember. A frame held while a note rings, a cursor coming to rest, the room after the music stops, a line of type, a fade under the name. Then work backwards.
+- **Peaks are optional.** Plenty of great films never peak. Steady confidence, or a slow settle, is often the better taste.
+- **Contrast is the tool, not the formula.** Stillness before motion, silence before sound, dark before light. Use it where the idea needs it, not always before the logo.
 - **The reveal arrives after the idea is felt.** Never open on the logo or the product name.
-- **End where you started, changed.** The closing frame answers the opening one (the scattered sheets become the mark).
+- **End where you started, changed.** The closing frame answers the opening one.
 - **The logo holds 2.5–5s** on a quiet frame. The tagline arrives after the mark.
-- **Claim, then proof.** Each line on screen is followed by the product proving it. Never two claims in a row with nothing shown, never long stretches of UI with nothing said.
+- **Claim, then proof.** Each line on screen is followed by the product proving it.
 
 ## 4. Pacing
 
-- **Write in beats.** Every scene starts on the beat grid; montage shots are 2, 1, ½ or ¼ beats. Off-grid cuts feel wrong even to people who can't say why.
-- **Pace follows the content's job.** Reading sets the pace for type (hold words/3.5 + 0.6s at least). Music sets the pace for montage. A UI action sets the pace for a demo (the shot ends when the action lands).
-- **Fast cuts need a constant.** Three-frame cuts only read when something stays fixed (a shape, a position, a line of type). Without one they are noise.
-- **Nothing is static.** Every shot moves a little (a 3–8% push, a drift, parallax). True holds are for the logo.
+Pace is how long the viewer is allowed to look. Cut a shot when it has said its thing, not when the music says so.
+- **Shots last as long as their content.** A UI action ends when the action lands. A line of type holds words/3.5 + 0.6s at least. Footage of something beautiful holds longer than footage of something busy.
+- **Choose the film's pace curve, and make it deliberate.** Even, slowing, or rising. A film whose cuts get faster to the end is a trailer; only do it when that is the form. Most films should slow down at the end: the last shots are the longest.
+- **Vary shot length within the curve.** Three shots of identical length feel mechanical. Long, short, long reads as an edit.
+- **Write in beats, but not every cut on the beat.** Cuts sit on the beat grid when the music is rhythmic. Over a rubato or ambient score, cut on the action and the breath instead; an off-grid cut against a free score feels natural.
+- **Fast cuts need a reason and a constant.** A montage is a choice of the trailer and loop forms, not a default. When used, keep something fixed (a shape, a position, a line of type) so it reads.
+- **Leave air.** A second of nothing between a claim and its proof lets the claim land. Room is a luxury signal.
+- **Nothing is static.** Every shot moves a little (a 3–8% push, a drift, parallax). True holds are for the logo and for the end.
 
 ## 5. Type
 
@@ -72,10 +88,14 @@ This is where most AI video looks cheap. The bar:
 
 ## 8. Sound
 
-- **The edit is the score.** The music follows the film's energy arc; every landing, click and flip has a sound placed on its frame.
-- **Silence is an instrument.** Stop the music dead before the biggest moment, then let it land.
-- **Pick an instrument that fits the product's voice:** felt piano for calm, human tools; glass and bells for precise ones; a pulse for energetic consumer ads.
-- **Resolve on the logo:** a chord that rings out, then quiet.
+Sound is taste you hear. Most generated films fail here the same way: the same bright music, building, stopping, booming. Choose the sound like a music supervisor, from the product's voice and the film's form.
+- **Start from what the product sounds like.** A writing app is a pencil and a quiet room. A developer tool is keys and a terminal bell. A camera app is a shutter. Its own sounds are often a better score than music; `room` (no music at all) is a real choice.
+- **Then pick an ensemble with a reason.** One solo piano played freely for something personal. A bowed chorale for something serious or premium. A warm electric piano on tape for something everyday and relaxed. Marimba for something playful and handmade. A pulse only for energy. Write the reason in the notes; "it's the default" is not one.
+- **Fewer instruments, more space.** One instrument played with feeling beats five layers. Rests are part of the music.
+- **The score doesn't have to follow the edit.** It can stay steady while the picture changes, thin out while the picture gets busier, or finish its phrase after the last cut. Matching every rise is the trailer's habit.
+- **Choose the ending:** a chord that rings, the phrase simply finishing, one short button note, a fade under the end card, or a cut to the room. Silence before the logo is one option among them, not the rule.
+- **Every action has its sound, quietly.** Clicks, keys, landings on their frames, mixed under the music, never louder than it.
+- **Don't repeat yourself.** If the last film used a style and an ending, this one needs a reason to use them again.
 - **Master to −14 LUFS** (web), −12 to −13 (social feeds), true peak ≤ −1 dBTP.
 
 ## 9. Format
@@ -92,7 +112,9 @@ This is where most AI video looks cheap. The bar:
 - The idea in one sentence, and why it belongs only to this product.
 - The film's one move.
 - What this film does that none of the references do.
-- The palette, the type, the instrument.
+- The form, the pace curve, and the last second, and why the trailer form is or isn't right here.
+- The sound: what the product itself sounds like, the ensemble and why, and the ending.
+- The palette and the type.
 - The grid: where every kind of words goes.
 - The footage: what will be recorded, filmed or generated for each shot.
 - The first frame and the last frame.

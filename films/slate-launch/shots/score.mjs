@@ -1,6 +1,6 @@
 // The studio's timeline up close: the playhead runs over the cues, and the waveform peaks on them.
 export default {
-  url: '/films/slate-launch/index.html?preview&panel=520&zoom=5&ui=1.7&t=27.4',
+  url: '/films/slate-launch/index.html?preview&panel=520&zoom=5&ui=1.7&t=29.6',
   ready: () => !!window.__studio?.ready,
   width: 1920, height: 800, scale: 1.25,
   async run(rec) {

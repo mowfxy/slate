@@ -13,10 +13,24 @@ foley; a two-band convolution room; glue compression and a soft clipper.
 usage: score.py build/manifest.json --out build [--music track.wav] [--lufs -14]
 writes: music.wav, sfx.wav, mix.wav (48 kHz stereo, loudness-normalized)
 
-Styles (manifest music.style):
-  felt   - felt piano, pad, soft pulse. Calm, human products, study, writing.
-  glass  - bell plucks over a bright pad. Clean tools, demos, precision.
-  pulse  - driving minor pulse, kick and claps. Teasers, ads, energy.
+Styles (manifest music.style). Each is its own ensemble and its own way of
+moving, not one arrangement with a different patch:
+  solo    - one felt piano, played rubato in phrases, off the grid. Intimate, considered.
+  strings - a slow bowed chorale that swells and recedes. Serious, premium, a story.
+  tape    - a warm electric piano and a swung brush groove, on worn tape. Relaxed, everyday.
+  wood    - marimba ostinato in 3+3+2 with a shaker. Playful, light, made by hand.
+  felt    - felt piano, pad, a soft pulse that arrives with energy. Calm, human products.
+  glass   - bell plucks over a bright pad. Clean tools, precision.
+  pulse   - driving minor pulse, kick and claps. Teasers and ads that want energy.
+  room    - no music at all: the product's own sounds and the room are the score.
+
+Endings (manifest music.end), chosen per film:
+  ring    - a chord on the style's own instrument rings out from the resolve cue.
+  phrase  - the music finishes its phrase at the resolve cue, nothing added; the room rings.
+  button  - the music stops on the resolve cue with one short final note.
+  fade    - the music plays on under the end card and fades over music.fadeLen seconds.
+  cut     - the music stops dead on the resolve cue, then only room tone.
+The default is ring when there is a resolve cue, else fade.
 """
 import argparse
 import json
@@ -35,7 +49,13 @@ PROGRESSIONS = {
     'felt': [(0, [0, 7, 14, 16, 23]), (9, [0, 7, 10, 14, 15]), (5, [0, 7, 11, 16, 18]), (7, [0, 5, 7, 14, 17])],  # Imaj9 vim9 IVmaj7#11 Vsus
     'glass': [(0, [0, 4, 7, 11, 14]), (5, [0, 4, 7, 11, 14]), (9, [0, 3, 7, 10, 14]), (7, [0, 5, 7, 10, 14])],
     'pulse': [(0, [0, 3, 7, 10, 14]), (8, [0, 4, 7, 11, 14]), (3, [0, 4, 7, 11, 14]), (10, [0, 4, 7, 9, 14])],
+    'solo': [(0, [0, 7, 16, 19, 23]), (4, [0, 3, 7, 10, 15]), (5, [0, 7, 14, 16, 21]), (0, [0, 7, 11, 16, 19]), (9, [0, 3, 7, 14, 15]), (5, [0, 4, 7, 14, 18]), (7, [0, 5, 7, 14, 17]), (0, [0, 7, 16, 19, 23])],  # I iii IV I vi IV Vsus I
+    'strings': [(0, [0, 7, 12, 16]), (9, [0, 7, 12, 15]), (5, [0, 7, 12, 16]), (7, [0, 7, 10, 17]), (0, [0, 7, 12, 16]), (4, [0, 7, 12, 15]), (5, [0, 7, 12, 14]), (7, [0, 7, 11, 14])],
+    'tape': [(0, [0, 4, 7, 11, 14]), (9, [0, 3, 7, 10, 14]), (2, [0, 3, 7, 10, 17]), (7, [0, 4, 7, 10, 14])],  # Imaj9 vi9 ii11 V9
+    'wood': [(0, [0, 4, 7, 12, 14]), (7, [0, 4, 7, 12, 14]), (9, [0, 3, 7, 12, 14]), (5, [0, 4, 7, 12, 14])],
 }
+STYLES = ('solo', 'strings', 'tape', 'wood', 'felt', 'glass', 'pulse', 'room')
+ENDINGS = ('ring', 'phrase', 'button', 'fade', 'cut')
 MAJOR_PENTA = [0, 2, 4, 7, 9]
 
 
@@ -227,6 +247,77 @@ def bell(freq, dur=4.0):
         s += amp * np.sin(2 * np.pi * freq * ratio * t) * np.exp(-t / tau)
     return s * np.minimum(1, t / 0.004)
 
+def bowed(freq, n, dyn, seed):
+    """A bowed string: band-limited saw with vibrato that blooms after the attack, rosin noise and a wooden body.
+    dyn (per-sample 0..1) is the bow: louder and brighter as it rises, so a chorale can swell and recede."""
+    r = rng(seed)
+    t = np.arange(n) / SR
+    depth = 0.0032 * np.minimum(1, t / 1.4)
+    f = freq * (1 + depth * np.sin(2 * np.pi * r.uniform(4.6, 5.4) * t + r.uniform(0, 6)) + 0.0006 * np.sin(2 * np.pi * 0.31 * t))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    s = np.zeros(n)
+    for k in range(1, int(min(28, 9000 // freq)) + 1):
+        s += np.sin(k * ph) / k
+    s += lowpass(r.standard_normal(n), 2500) * 0.015
+    s = 0.5 * s + 0.6 * bandpass(s, 260, 620) + 0.35 * bandpass(s, 1900, 3400)
+    out = np.zeros(n)
+    blk, zi = 2048, None
+    for i in range(0, n, blk):
+        c = 900 + 3800 * float(np.mean(dyn[i:i + blk])) ** 1.2
+        sos = butter(2, c, btype='low', fs=SR, output='sos')
+        if zi is None:
+            zi = np.zeros((sos.shape[0], 2))
+        out[i:i + blk], zi = sosfilt(sos, s[i:i + blk], zi=zi)
+    env = np.minimum(1, t / 0.45) * np.minimum(1, (n / SR - t) / 0.6)
+    return out * env * (0.12 + 0.88 * dyn)
+
+
+def rhodes(freq, dur, vel=0.6, seed=0):
+    """Electric piano: a sine pair in FM whose bark fades fast, a tine ping, and a slow amp tremolo."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    r = rng(seed)
+    idx = (0.8 + 2.4 * vel) * np.exp(-t / 0.22)
+    s = np.sin(2 * np.pi * freq * t + idx * np.sin(2 * np.pi * freq * t + r.uniform(0, 1)))
+    s *= 0.65 * np.exp(-t / (1.4 * (220 / max(freq, 110)) ** 0.3)) + 0.35 * np.exp(-t / 4)
+    s += np.sin(2 * np.pi * freq * 6.9 * t) * np.exp(-t / 0.025) * 0.12 * vel
+    s *= 1 + 0.08 * np.sin(2 * np.pi * 4.2 * t)
+    rel = np.ones(n)
+    rn = min(n, int(0.2 * SR))
+    rel[-rn:] = np.linspace(1, 0, rn) ** 2
+    return s * np.minimum(1, t / 0.003) * rel * vel
+
+
+def mallet(freq, dur=1.2, vel=0.6, seed=0):
+    """Marimba bar: a tuned fundamental, the 4th and 10th partials a bar is cut for, and a felt-mallet knock."""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    r = rng(seed)
+    tau = 0.55 * (330 / max(freq, 110)) ** 0.6
+    s = np.sin(2 * np.pi * freq * t) * np.exp(-t / tau)
+    s += 0.3 * vel * np.sin(2 * np.pi * freq * 3.93 * t) * np.exp(-t / (tau * 0.18))
+    s += 0.1 * vel * np.sin(2 * np.pi * freq * 9.2 * t) * np.exp(-t / 0.02)
+    k = min(n, int(0.012 * SR))
+    s[:k] += lowpass(r.standard_normal(k), 1800) * np.exp(-np.arange(k) / (0.002 * SR)) * 0.3
+    return s * np.minimum(1, t / 0.0015) * vel
+
+
+def shaker(r):
+    n = int(0.09 * SR)
+    t = np.arange(n) / SR
+    return bandpass(r.standard_normal(n), 5000, 14000) * np.minimum(1, t / 0.02) * np.exp(-t / 0.03)
+
+
+def tape(x, seed=5, wow=0.0016, flutter=0.00025):
+    """Worn tape: slow wow and fast flutter in the speed, gentle saturation, rolled-off highs."""
+    r = rng(seed)
+    n = len(x)
+    t = np.arange(n) / SR
+    d = wow * np.sin(2 * np.pi * 0.45 * t + r.uniform(0, 6)) + flutter * np.sin(2 * np.pi * 6.3 * t) + wow
+    src = np.clip(np.arange(n) - d * SR, 0, n - 1)
+    out = np.stack([np.interp(src, np.arange(n), x[:, c]) for c in range(2)], axis=1)
+    return lowpass(np.tanh(out * 1.4) / 1.4, 7000)
+
 
 # ------------------------------------------------------------------ foley
 
@@ -359,33 +450,31 @@ def silences(events):
 
 # ------------------------------------------------------------------ score
 
-def compose(man):
-    dur = man['duration']
-    n = int(np.ceil(dur * SR)) + 1
-    beat = 60.0 / man['bpm']
-    style = (man.get('music') or {}).get('style') or man.get('musicStyle') or 'felt'
-    prog = PROGRESSIONS.get(style, PROGRESSIONS['felt'])
-    key = (man.get('music') or {}).get('key') or man.get('key') or 'D'
-    root = 48 + NOTE.get(key, 2)
-    e = energy_curve(man, n)
-    events = man['events']
-    hush = silences(events)
-    resolve = next((ev['t'] for ev in events if ev['type'] == 'resolve'), None)
-    end_music = resolve if resolve is not None else dur
-    r = rng(11)
+def voice(style):
+    """The style's own instrument, for landings, hits and the last chord: f, dur, vel, seed -> mono signal."""
+    if style == 'tape':
+        return rhodes
+    if style == 'wood':
+        return lambda f, d, v, s: mallet(f, min(d, 2.0), v, s)
+    if style == 'glass':
+        return lambda f, d, v, s: bell(f, d) * v
+    if style == 'pulse':
+        return lambda f, d, v, s: pluck(f, min(d, 1.4), v)
+    if style == 'strings':
+        return lambda f, d, v, s: bowed(f, int(d * SR), np.linspace(v, 0.04, int(d * SR)) ** 1.5, s) * 0.7
+    return felt_piano
 
-    def quiet(t):
-        return any(a - 0.02 <= t < b for a, b in hush)
 
-    def chord_at(t):
-        return prog[int(t // (beat * 8)) % len(prog)]
+def chord_pitches(root, off, chord, lo, hi):
+    """Every pitch of the chord between lo and hi (MIDI)."""
+    return sorted({root + off + iv + 12 * o for iv in chord for o in range(-3, 4) if lo <= root + off + iv + 12 * o <= hi})
 
-    pad = np.zeros((n, 2))
-    keys = np.zeros((n, 2))
-    drums = np.zeros((n, 2))
-    low = np.zeros((n, 2))
 
-    # Pad: one chord per two bars, filter follows the arc.
+def play_grid(style, ctx):
+    """felt, glass and pulse: an eighth-note grid whose layers enter as the energy rises."""
+    root, prog, beat, e, n, r, end_music, quiet = (ctx[k] for k in ('root', 'prog', 'beat', 'e', 'n', 'r', 'end_music', 'quiet'))
+    pad, keys, drums, low = ctx['pad'], ctx['keys'], ctx['drums'], ctx['low']
+    chord_at = ctx['chord_at']
     t0, k = 0.0, 0
     while t0 < end_music:
         off, chord = prog[k % len(prog)]
@@ -397,13 +486,11 @@ def compose(man):
                 pad[a:b] += analog_pad(midi_hz(root + off + iv), seg, e[a:b], seed=k * 10 + v) * fade[:, None] * 0.06
         k += 1
         t0 += beat * 8
-    # duck the pad with the arc so quiet passages are really quiet
     pad *= (0.35 + 0.65 * e)[:, None]
 
-    # Lead + rhythm on an eighth-note grid.
     step = beat / 2
     i = 0
-    motif = [0, 2, 1, 3, 2, 4, 3, 1]  # chord-tone indices, a gentle rising-falling figure
+    motif = [0, 2, 1, 3, 2, 4, 3, 1]
     while i * step < end_music - 1e-6:
         t = i * step
         en = float(e[min(n - 1, int(t * SR))])
@@ -414,14 +501,12 @@ def compose(man):
             i += 1
             continue
         if style == 'felt':
-            # piano: sparse at low energy (every 2 beats), eighths when it rises
             every = 4 if en < 0.3 else 2 if en < 0.5 else 1
             if i % every == 0 and en > 0.08:
                 tone = chord[motif[(i // every) % len(motif)] % len(chord)]
-                f = midi_hz(root + 12 + off + tone)
                 vel = 0.32 + 0.35 * en + (0.08 if on_beat else 0) + r.uniform(-0.04, 0.04)
-                place(keys, felt_piano(f, 2.6, vel, seed=i), t + r.uniform(0, 0.008), gain=0.22, pan=0.25 * np.sin(i * 0.7))
-            if bar_pos == 0 and en > 0.2:  # left hand: root + fifth, low
+                place(keys, felt_piano(midi_hz(root + 12 + off + tone), 2.6, vel, seed=i), t + r.uniform(0, 0.008), gain=0.22, pan=0.25 * np.sin(i * 0.7))
+            if bar_pos == 0 and en > 0.2:
                 place(keys, felt_piano(midi_hz(root - 12 + off), 3.5, 0.4 + 0.3 * en, seed=1000 + i), t, gain=0.14, pan=-0.15)
                 place(keys, felt_piano(midi_hz(root - 5 + off), 3.5, 0.35 + 0.3 * en, seed=2000 + i), t + 0.02, gain=0.12, pan=-0.1)
             if on_beat and en > 0.4:
@@ -454,7 +539,7 @@ def compose(man):
                 place(keys, pluck(midi_hz(root + 24 + off + chord[(i * 2) % len(chord)]), 0.35, en), t, gain=0.12, pan=0.4 if i % 2 else -0.4)
         i += 1
 
-    # Sidechain: the pad breathes around each kick.
+    # the pad breathes around each kick
     duck = np.ones(n)
     for ev_t in [k_ * step for k_ in range(int(end_music / step) + 1) if (k_ % 8) in (0, 4)]:
         a = int(ev_t * SR)
@@ -463,10 +548,195 @@ def compose(man):
             duck[a:a + m] = np.minimum(duck[a:a + m], 1 - 0.35 * np.exp(-np.arange(m) / (0.09 * SR)))
     pad *= duck[:, None]
 
-    # Silences: the music stops dead (the room keeps ringing, because reverb is applied after).
+
+def play_solo(ctx):
+    """One piano, played like a person: a rolled left hand a hair late, a melody in breaths, off the grid.
+    Energy changes touch and density, never adds instruments."""
+    root, prog, beat, e, n, r, end_music, quiet, keys = (ctx[k] for k in ('root', 'prog', 'beat', 'e', 'n', 'r', 'end_music', 'quiet', 'keys'))
+    penta = [root + 12 + d + 12 * o for o in range(3) for d in MAJOR_PENTA]
+    phrases = [[0, 1.5, 2.5, 4], [0.5, 2, 3, 3.5, 5.5], [0, 1, 2.5, 6], [1, 2.5, 4.5]]
+    shape = [[0, 1, 2, 1], [0, 1, 2, 3, 1], [0, -1, 1, 2], [2, 1, 0]]
+    t0, k, last = 0.0, 0, root + 19
+    while t0 < end_music - 0.5:
+        off, chord = prog[k % len(prog)]
+        en = float(e[min(n - 1, int(t0 * SR))])
+        if not quiet(t0) and en > 0.04:
+            late = r.uniform(0.02, 0.06)
+            for j, p in enumerate(chord_pitches(root, off, chord[:3], root - 14, root + 4)[:3]):
+                place(keys, felt_piano(midi_hz(p), 5.0, 0.26 + 0.24 * en, seed=k * 7 + j), t0 + late + j * r.uniform(0.04, 0.07), gain=0.15, pan=-0.25 + 0.1 * j)
+        # the melody rests every fourth phrase, so the piece breathes
+        if k % 4 != 3 and en > 0.12:
+            beats, steps = phrases[k % len(phrases)], shape[k % len(shape)]
+            if en < 0.3:
+                beats = beats[:2]
+            tones = chord_pitches(root, off, chord, root + 14, root + 31)
+            start = min(tones, key=lambda p: abs(p - last))
+            si = penta.index(min(penta, key=lambda p: abs(p - start)))
+            drift = 0.0
+            for j, bt in enumerate(beats):
+                drift += r.uniform(-0.04, 0.07) * beat  # rubato: time stretches, a little more each note
+                t = t0 + bt * beat + drift
+                if t >= end_music or quiet(t):
+                    continue
+                p = start if j == 0 else penta[int(np.clip(si + steps[j % len(steps)], 0, len(penta) - 1))]
+                vel = 0.3 + 0.38 * en - 0.05 * j + r.uniform(-0.03, 0.03)
+                place(keys, felt_piano(midi_hz(p), 3.2, max(0.15, vel), seed=300 + k * 11 + j), t, gain=0.2, pan=0.2 + 0.05 * j)
+                last = p
+        # an inner voice answers at the end of the second bar when the energy is up
+        if en > 0.45:
+            inner = chord_pitches(root, off, chord, root + 2, root + 13)
+            if inner:
+                place(keys, felt_piano(midi_hz(inner[len(inner) // 2]), 2.5, 0.22 + 0.2 * en, seed=700 + k), t0 + 6.5 * beat + r.uniform(0, 0.05), gain=0.12, pan=-0.05)
+        t0 += beat * 8
+        k += 1
+
+
+def play_strings(ctx):
+    """A bowed chorale: cello on the root, three upper voices that move to the nearest note of the next chord.
+    No rhythm at all; the energy is the bow, so the music swells and recedes with the film."""
+    root, prog, beat, e, n, end_music, pad = (ctx[k] for k in ('root', 'prog', 'beat', 'e', 'n', 'end_music', 'pad'))
+    seg_len = beat * 8
+    voices = [root + 7, root + 12, root + 16]
+    t0, k = 0.0, 0
+    while t0 < end_music - 0.3:
+        off, chord = prog[k % len(prog)]
+        a = int(t0 * SR)
+        b = min(n, int((min(t0 + seg_len, end_music) + 0.7) * SR))
+        seg = b - a
+        if seg <= SR // 4:
+            break
+        dyn = np.clip(0.18 + 0.82 * e[a:b], 0, 1)
+        targets = chord_pitches(root, off, chord, root - 2, root + 26)
+        nxt = []
+        for v in voices:  # voice leading: each voice takes the closest free chord tone
+            p = min((q for q in targets if q not in nxt), key=lambda q: abs(q - v), default=v)
+            nxt.append(p)
+        voices = nxt
+        bass = root - 12 + off if off <= 7 else root - 24 + off
+        for j, (p, pan) in enumerate([(bass, -0.3), (voices[0], -0.1), (voices[1], 0.15), (voices[2], 0.35)]):
+            pad[a:b] += np.outer(bowed(midi_hz(p), seg, dyn, seed=k * 13 + j), [np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)]) * (0.075 if j == 0 else 0.055)
+        t0 += seg_len
+        k += 1
+
+
+def play_tape(ctx):
+    """Electric piano comping on a swung grid, a round bass and brushes, then the whole band goes through tape."""
+    root, prog, beat, e, n, r, end_music, quiet = (ctx[k] for k in ('root', 'prog', 'beat', 'e', 'n', 'r', 'end_music', 'quiet'))
+    keys, drums, low, chord_at = ctx['keys'], ctx['drums'], ctx['low'], ctx['chord_at']
+    swing = 0.62  # where the off-eighth sits inside the beat (0.5 is straight)
+    j = 0
+    while j * beat < end_music - 1e-6:
+        t = j * beat
+        bar_pos = j % 4
+        en = float(e[min(n - 1, int(t * SR))])
+        off, chord = chord_at(t)
+        if quiet(t) or en < 0.04:
+            j += 1
+            continue
+        hits = []
+        if bar_pos == 0:
+            hits.append((t, 0.4 + 0.3 * en, 2.4))
+        if bar_pos == 1:
+            hits.append((t + swing * beat, 0.3 + 0.25 * en, 1.0))
+        if bar_pos == 3 and en > 0.5:
+            hits.append((t + swing * beat, 0.26 + 0.2 * en, 0.8))
+        for ht, vel, d in hits:
+            for v, p in enumerate(chord_pitches(root, off, chord[1:], root + 2, root + 20)[:4]):
+                place(keys, rhodes(midi_hz(p), d, vel, seed=j * 5 + v), ht + v * 0.008 + r.uniform(0, 0.01), gain=0.13, pan=-0.2 + 0.13 * v)
+        if en > 0.2:  # bass: root on 1, fifth on 3, an approach note into the next bar when it moves
+            notes = {0: root - 12 + off, 2: root - 5 + off}
+            if bar_pos in notes:
+                f = midi_hz(notes[bar_pos])
+                body = rhodes(f, beat * 1.6, 0.5, seed=900 + j)
+                round_ = sub(f, beat * 1.4)
+                body[: len(round_)] += 0.6 * round_[: len(body)]
+                place(low, body, t, gain=0.17)
+            if bar_pos == 3 and en > 0.5:
+                place(low, rhodes(midi_hz(root - 13 + chord_at(t + beat)[0]), beat * 0.5, 0.45, seed=950 + j), t + swing * beat, gain=0.13)
+        if en > 0.38:
+            if bar_pos in (0, 2):
+                place(drums, soft_kick(r), t, gain=0.32 * en)
+            if bar_pos == 2 and en > 0.6:
+                place(drums, soft_kick(r), t + swing * beat, gain=0.2 * en)
+            if bar_pos in (1, 3):
+                place(drums, brush(r, 0.32), t, gain=0.09, pan=0.15)
+            place(drums, brush(r, 0.05), t, gain=0.035, pan=0.35)
+            place(drums, brush(r, 0.05), t + swing * beat, gain=0.05, pan=0.35)
+        j += 1
+
+
+def play_wood(ctx):
+    """A marimba ostinato accented 3+3+2, a low bar on the downbeats, a shaker when it lifts."""
+    root, beat, e, n, r, end_music, quiet = (ctx[k] for k in ('root', 'beat', 'e', 'n', 'r', 'end_music', 'quiet'))
+    keys, drums, low, chord_at = ctx['keys'], ctx['drums'], ctx['low'], ctx['chord_at']
+    step = beat / 2
+    figure = [0, 2, 4, 1, 3, 5, 2, 4]
+    i = 0
+    while i * step < end_music - 1e-6:
+        t = i * step
+        pos = i % 8
+        en = float(e[min(n - 1, int(t * SR))])
+        off, chord = chord_at(t)
+        accent = pos in (0, 3, 6)
+        if quiet(t) or en < 0.06 or (en < 0.32 and not accent):
+            i += 1
+            continue
+        tones = chord_pitches(root, off, chord, root + 12, root + 31)
+        p = tones[figure[pos] % len(tones)]
+        place(keys, mallet(midi_hz(p), 1.1, (0.55 if accent else 0.3) + 0.25 * en, seed=i), t + r.uniform(0, 0.006), gain=0.2, pan=-0.35 + 0.1 * pos)
+        if pos in (0, 4) and en > 0.2:
+            place(low, mallet(midi_hz(root - 12 + off), 1.8, 0.6, seed=2000 + i), t, gain=0.3)
+        if en > 0.45:
+            place(drums, shaker(r), t + (0.01 if pos % 2 else 0), gain=0.06 + (0.03 if pos % 2 else 0), pan=0.4)
+        if en > 0.65 and pos == 6 and (i // 8) % 2:
+            place(keys, mallet(midi_hz(tones[-1] + 12 if tones[-1] < root + 36 else tones[-1]), 1.2, 0.4, seed=3000 + i), t, gain=0.1, pan=0.5)
+        i += 1
+
+
+def compose(man):
+    dur = man['duration']
+    n = int(np.ceil(dur * SR)) + 1
+    beat = 60.0 / man['bpm']
+    m = man.get('music') or {}
+    style = m.get('style') or man.get('musicStyle')
+    if not style:
+        raise SystemExit(f"score: the film chose no sound. Call F.music({{style, end}}) with one of {', '.join(STYLES)} (see skills/sound-design)")
+    if style not in STYLES:
+        raise SystemExit(f"score: unknown style {style!r}; choose one of {', '.join(STYLES)}")
+    prog = PROGRESSIONS.get(style, PROGRESSIONS['felt'])
+    key = m.get('key') or man.get('key') or 'D'
+    root = 48 + NOTE.get(key, 2)
+    e = energy_curve(man, n)
+    events = man['events']
+    hush = silences(events)
+    resolve = next((ev['t'] for ev in events if ev['type'] == 'resolve'), None)
+    ending = m.get('end') or ('ring' if resolve is not None else 'fade')
+    if ending not in ENDINGS:
+        raise SystemExit(f"score: unknown ending {ending!r}; choose one of {', '.join(ENDINGS)}")
+    if resolve is None and ending != 'fade':
+        ending = 'fade'
+    end_music = dur if ending == 'fade' else resolve
+    if style == 'room':
+        return np.zeros((int(round(dur * SR)), 2))
+    r = rng(11)
+
+    def quiet(t):
+        return any(a - 0.02 <= t < b for a, b in hush)
+
+    def chord_at(t):
+        return prog[int(t // (beat * 8)) % len(prog)]
+
+    pad, keys, drums, low = (np.zeros((n, 2)) for _ in range(4))
+    ctx = dict(root=root, prog=prog, beat=beat, e=e, n=n, r=r, end_music=end_music, quiet=quiet, chord_at=chord_at, pad=pad, keys=keys, drums=drums, low=low)
+    if style in ('felt', 'glass', 'pulse'):
+        play_grid(style, ctx)
+    else:
+        {'solo': play_solo, 'strings': play_strings, 'tape': play_tape, 'wood': play_wood}[style](ctx)
+
+    # silences: the music stops dead (the room keeps ringing, because reverb is applied after)
     gate = np.ones(n)
     for a, b in hush:
-        ia, ib = int(a * SR), int(b * SR)
+        ia, ib = int(a * SR), min(n, int(b * SR))
         fall = int(0.03 * SR)
         gate[ia:ia + fall] = np.minimum(gate[ia:ia + fall], np.linspace(1, 0, len(gate[ia:ia + fall])))
         gate[ia + fall:ib] = 0
@@ -475,38 +745,62 @@ def compose(man):
     for layer in (pad, low, keys, drums):
         layer *= gate[:, None]
 
-    # Moments: landings play the scale upward, hits bloom, the resolve rings out.
+    # moments, on the style's own instrument: landings climb a scale, hits bloom
+    play = voice(style)
     for ev in events:
         typ, t = ev['type'], ev['t']
         if typ == 'land':
-            off, chord = chord_at(t)
             scale = [root + 12 + d + 12 * o for o in range(3) for d in MAJOR_PENTA]
             idx = int(round(ev.get('i', 0) / max(1, ev.get('n', 1)) * (len(scale) - 1)))
             vel = 0.3 if ev.get('soft') else 0.55
-            place(keys, felt_piano(midi_hz(scale[idx]), 2.2, vel, seed=int(t * 100)), t, gain=0.16 if ev.get('soft') else 0.26, pan=(idx / len(scale) - 0.5) * 0.9)
+            place(keys, play(midi_hz(scale[idx]), 2.2, vel, int(t * 100)), t, gain=0.16 if ev.get('soft') else 0.26, pan=(idx / len(scale) - 0.5) * 0.9)
         elif typ == 'hit':
             off, chord = chord_at(t)
             for v, iv in enumerate(chord[:4]):
-                place(keys, felt_piano(midi_hz(root + off + iv), 4, 0.75, seed=v), t + v * 0.012, gain=0.2, pan=(v - 1.5) * 0.3)
+                place(keys, play(midi_hz(root + off + iv), 4, 0.75, v), t + v * 0.012, gain=0.2, pan=(v - 1.5) * 0.3)
         elif typ == 'glint':
             place(keys, bell(midi_hz(root + 36 + 7), 2.5), t, gain=0.05, pan=0.4)
-    if resolve is not None:
+
+    # the ending
+    if ending in ('button', 'cut'):  # everything stops on the cue, notes still ringing included
+        ia, fall = int(resolve * SR), int(0.03 * SR)
+        stop = np.ones(n)
+        stop[ia:ia + fall] = np.linspace(1, 0, len(stop[ia:ia + fall]))
+        stop[ia + fall:] = 0
+        for layer in (pad, low, keys, drums):
+            layer *= stop[:, None]
+    if ending == 'ring':
         tail = dur - resolve + 1
         for v, iv in enumerate([0, 7, 16, 19, 26]):  # rolled, open voicing
-            place(keys, felt_piano(midi_hz(root - 12 + iv + (12 if v else 0)), max(2.5, tail), 0.5 - 0.04 * v, seed=500 + v), resolve + v * 0.045, gain=0.24, pan=(v - 2) * 0.2)
+            place(keys, play(midi_hz(root - 12 + iv + (12 if v else 0)), max(2.5, tail), 0.5 - 0.04 * v, 500 + v), resolve + v * 0.045, gain=0.09 if style in ('solo', 'strings') else 0.24, pan=(v - 2) * 0.2)
         place(low, sub(midi_hz(root - 12), max(1.0, tail - 0.5)), resolve, gain=0.08)
-        a = int(resolve * SR)
-        seg = n - a
-        bright = np.linspace(0.5, 0.1, seg)
-        for v, iv in enumerate([0, 7, 16]):
-            pad[a:] += analog_pad(midi_hz(root + iv), seg, bright, seed=900 + v) * (np.minimum(1, np.arange(seg) / (0.3 * SR)) * np.exp(-np.arange(seg) / (2.5 * SR)))[:, None] * 0.05
+        if style in ('felt', 'glass', 'pulse'):
+            a = int(resolve * SR)
+            seg = n - a
+            bright = np.linspace(0.5, 0.1, seg)
+            for v, iv in enumerate([0, 7, 16]):
+                pad[a:] += analog_pad(midi_hz(root + iv), seg, bright, seed=900 + v) * (np.minimum(1, np.arange(seg) / (0.3 * SR)) * np.exp(-np.arange(seg) / (2.5 * SR)))[:, None] * 0.05
+    elif ending == 'button':
+        for v, p in enumerate([root - 12, root + 12]):  # one short note, in octaves, right on the cue
+            sig = play(midi_hz(p), 1.4, 0.55, 600 + v)
+            sig = sig * np.exp(-np.arange(len(sig)) / (0.35 * SR))
+            place(keys, sig, resolve, gain=0.3, pan=0.15 * (v - 0.5))
 
-    room = room_ir()
-    pad = highpass(pad, 140)
+    room = room_ir(4.0, 2.2, 0.8) if style in ('solo', 'strings') else room_ir()
+    pad = highpass(pad, 60 if style == 'strings' else 140)
     keys = highpass(keys, 55)
-    music = reverb(pad, room, 0.35) + reverb(keys, room, 0.32) + reverb(drums, room, 0.12) + low
-    fade_n = int(0.6 * SR)
-    music[-fade_n:] *= np.linspace(1, 0, fade_n)[:, None] ** 2
+    wet = {'solo': 0.4, 'strings': 0.38, 'tape': 0.18, 'wood': 0.22}.get(style, 0.32)
+    music = reverb(pad, room, 0.35) + reverb(keys, room, wet) + reverb(drums, room, 0.12) + low
+    if style == 'tape':
+        music = tape(music)
+    if ending == 'cut':  # the room goes too: only the sound design's room tone is left
+        music *= stop[:len(music), None]
+    if ending == 'fade':
+        fade_n = min(len(music) - 1, int(float(m.get('fadeLen', 3.0)) * SR))
+        music[-fade_n:] *= np.linspace(1, 0, fade_n)[:, None] ** 1.5
+    else:
+        fade_n = int(0.6 * SR)
+        music[-fade_n:] *= np.linspace(1, 0, fade_n)[:, None] ** 2
     return music[: int(round(dur * SR))]
 
 
@@ -542,8 +836,12 @@ def sound_design(man):
             place(out, tick(1600 + 200 * ev.get('i', 0)), t, gain=0.05, pan=0.2 * ev.get('i', 0) - 0.2)
         elif typ == 'cut' and ev.get('accent'):
             place(out, tick(2400), t, gain=0.03)
-    # a faint room tone keeps silence from sounding like a dropout
-    tone = lowpass(r.standard_normal((n, 2)), 400) * 0.004
+    # a faint room tone keeps silence from sounding like a dropout; music.room raises it when the room is part of the score
+    level = float((man.get('music') or {}).get('room', 1.0))
+    tone = lowpass(r.standard_normal((n, 2)), 400) * 0.004 * level
+    if level > 1:  # a lived-in room: a little air above the rumble, slowly breathing
+        breath = 1 + 0.25 * np.sin(2 * np.pi * np.arange(n) / SR / 7.0)
+        tone += bandpass(r.standard_normal((n, 2)), 600, 4000) * 0.0012 * level * breath[:, None]
     return reverb(out, room, 0.18) + tone
 
 
@@ -551,7 +849,7 @@ def sound_design(man):
 
 def glue(x, thresh_db=-18, ratio=2.0, attack=0.01, release=0.15):
     """Gentle RMS bus compressor, linked stereo."""
-    level = np.sqrt(lowpass(np.mean(x ** 2, axis=1), 1 / (2 * np.pi * attack)) + 1e-12)
+    level = np.sqrt(np.maximum(lowpass(np.mean(x ** 2, axis=1), 1 / (2 * np.pi * attack)), 0) + 1e-12)
     db = 20 * np.log10(level)
     over = np.maximum(0, db - thresh_db)
     gain_db = -over * (1 - 1 / ratio)
@@ -606,7 +904,8 @@ def main():
     sfx = sound_design(man)
     write(os.path.join(a.out, 'music.wav'), music)
     write(os.path.join(a.out, 'sfx.wav'), sfx)
-    mix = music * 0.85 + sfx
+    # music.gain sets the music against the sound design: below 1 when the product's own sounds lead
+    mix = music * 0.85 * float((man.get('music') or {}).get('gain', 1.0)) + sfx
     mix = soft_clip(glue(mix / (np.max(np.abs(mix)) or 1) * 0.9))
     raw = os.path.join(a.out, 'mix.raw.wav')
     write(raw, mix)

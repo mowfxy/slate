@@ -23,6 +23,8 @@ It measures the rendered file, not the plan:
 | Cuts on the beat | < 85% of detected cuts are within a frame of the ¼-beat grid |
 | Planned cuts are visible (warn) | soft cuts between similar frames; fine for title→title, bad inside a montage |
 | The ending lands (warn) | busy cutting in the last 15% |
+| Form is chosen (warn) | the film's notes don't say its `form` and `sound` |
+| Not the trailer habit (warn) | cuts accelerate into the end and the music stops before the logo, and the notes don't say `form: 'trailer'` |
 | Logo holds | the last `logo` scene is < 2.5s |
 | Every line is readable | a scene is up for less than max(1.2s, words/3.5 + 0.6s) for its `words` |
 | Short lines (warn) | > 9 words in one `type` scene |
@@ -46,8 +48,8 @@ Open `build/critic/contact.jpg` (and stills of any moment in doubt). Score each 
 3. **One focal point per frame.** Nothing competes with the subject; nothing important is cropped.
 4. **Image quality.** Real moving footage (recorded UI, filmed or generated video), not screenshots sliding around. Light and depth, material, grain; nothing looks like flat boxes on flat color.
 5. **Type and layout.** The brand's typefaces, readable size, ≤ 7 words. Every line sits on the film's grid: the same axis and baseline each time it appears, never on top of a busy picture, never jammed against UI, never off-center by accident. The layout check catches collisions; you judge the composition.
-6. **Rhythm.** Shots shorten into the peak and open up after it; the cut-rhythm bars show a shape, not noise.
-7. **Sound shape.** The loudness curve rises to the hit, dips for the title, resolves to quiet.
+6. **Pace.** The cut-rhythm bars show the shape the form promised (even, slowing, or rising for a trailer), with varied shot lengths, not noise. Every shot is held as long as its content needs and no longer. Nothing is rushed at the end unless that is the point.
+7. **Sound.** The ensemble fits the product's voice, and the notes say why. The loudness curve has the chosen shape. Foley sits under the music. The last second sounds decided: a ring, a phrase ending, a button, a fade or the room, not the default. Would a music supervisor pick this for this product?
 8. **The ending.** The logo sits on a quiet, uncluttered frame and holds, and answers the opening.
 
 ## Deciding the fix
@@ -58,4 +60,5 @@ Open `build/critic/contact.jpg` (and stills of any moment in doubt). Score each 
 - Static-looking shots: record real footage of the product with `engine/record.mjs` instead of animating a screenshot.
 - A failed originality check: the critic names the reference and the time. Redesign that shot (composition and palette), don't just nudge it.
 - Flat or cheap-looking frames: add light (a glow, shading), depth (blur by distance, real shadows), material (texture, grain) before adding more things.
+- A film that feels generic usually has the trailer form by habit: change the form and the sound before touching any frame.
 - Stop after 4 rounds. Deliver the best render and say plainly what is still below a 4 and why (usually missing real footage or a real music track).

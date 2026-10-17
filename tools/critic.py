@@ -73,6 +73,21 @@ def main():
     quarters = [sum(1 for c in detected if q * dur / 4 <= c < (q + 1) * dur / 4) for q in range(4)]
     tail = [c for c in detected if c > dur * 0.85]
     check(R, 'The ending lands', len(tail) <= max(2, 0.15 * dur), f"{len(tail)} cuts in the final 15%; cuts per quarter {quarters}", 'warn')
+    # Form: the film says what shape it chose, and doesn't fall into the trailer habit by default.
+    notes = tl.get('notes') or {}
+    check(R, 'Form is chosen', bool(notes.get('form')) and bool(notes.get('sound')),
+          f"form: {notes.get('form') or '—'}; sound: {notes.get('sound') or '—'}"[:160] if notes.get('form') or notes.get('sound') else "no form or sound in F.notes()", 'warn')
+    first_logo = min([s['start'] for s in tl['scenes'] if s['kind'] == 'logo'] or [dur])
+    body = [c for c in detected if c < first_logo - frame]
+    lens = np.diff([0] + body + [first_logo]) if body else np.array([first_logo])
+    third = max(1, len(lens) // 3)
+    early, late = float(np.median(lens[:-third])) if len(lens) > third else 0, float(np.median(lens[-third:]))
+    accelerates = len(lens) >= 6 and late < 0.55 * early
+    stops = any(ev['type'] == 'drop' and first_logo - 4 <= ev['t'] <= first_logo + 0.5 for ev in tl['events'])
+    trailer = str(notes.get('form', '')).lower().startswith('trailer')
+    check(R, 'Not the trailer habit', trailer or not (accelerates and stops),
+          f"shots {early:.1f}s early, {late:.1f}s before the logo; {'music stops before the logo' if stops else 'no stop before the logo'}"
+          + (' (declared trailer)' if trailer else ''), 'warn')
     logos = [s for s in tl['scenes'] if s['kind'] == 'logo']
     if logos:
         hold = logos[-1]['end'] - logos[-1]['start']

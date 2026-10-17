@@ -25,15 +25,19 @@ Write three different concepts, each in this form:
 - **Idea:** one sentence, the product's promise made visible.
 - **Why only this product:** the material it is made from.
 - **The move:** the one motion repeated at every scale.
-- **First frame / last frame.**
-- **Sound:** instrument and arc.
+- **Form:** the take, call and response, settle, slow reveal, loop or trailer (`video-taste` §3), and the pace curve.
+- **First frame / last frame, and the last second** (what is seen and heard as it ends).
+- **Sound:** what the product itself sounds like, the ensemble and why, the ending.
+
+Make the three concepts differ in form and sound too, not only in imagery.
 
 Then gate them:
 1. Reject any concept whose central image or main transition is on `video-taste/references/do-not-copy.md`, or is the same move in different clothes. Write the rejection reason.
 2. Reject any concept that would still work with a competitor's logo at the end.
-3. Pick the strongest one left and say why. If the person is around, show them the three; otherwise pick and keep going.
+3. Reject the trailer form (accelerating cuts, a stop, the logo slam) unless the occasion is a loud launch and you can say why calmer forms would undersell it.
+4. Pick the strongest one left and say why. If the person is around, show them the three; otherwise pick and keep going.
 
-Store the decision with `F.notes({idea, motif, rejected})` so it travels with the film.
+Store the decision with `F.notes({idea, motif, form, sound, rejected})` so it travels with the film.
 
 ## 3. Style frames before motion
 
@@ -61,7 +65,7 @@ A film is a web page: `films/<name>/index.html` plus its CSS and JS, written new
 - Time everything in beats (`F.b(n)`), with the tempo chosen for the film's energy.
 - Declare each scene with what must be readable (`words`) and its `kind`.
 - Put every word on the grid you chose (see `video-taste`, Layout), then run `node engine/render.mjs films/<name> --audit` and fix every line it prints.
-- Place sound cues on the frames where things happen (`F.cue('land', t)`), and set the energy arc (`F.music({arc})`).
+- Place sound cues on the frames where things happen (`F.cue('land', t)`), and set the score's style, dynamics and ending (`F.music({style, arc, end})`) from the concept's sound.
 - Preview in a browser with `node engine/serve.mjs`, then open `http://localhost:4173/films/<name>/`, where you can scrub with the arrow keys.
 
 ## 6. Render, critique, fix

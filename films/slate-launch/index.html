@@ -20,7 +20,9 @@
   <section data-scene="frames" class="shot"><div class="picture"><video src="footage/frames.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
   <section data-scene="score" class="shot"><div class="picture"><video src="footage/score.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
   <section data-scene="critic" class="shot"><div class="picture"><video src="footage/critic.webm" data-at="0" data-from="0" muted playsinline preload="auto"></video></div></section>
-  <section data-scene="montage" class="shot"><div class="picture" id="montage"></div></section>
+
+  <!-- the picture darkens as the sticks close, so no bright sliver of footage is left between them -->
+  <div class="dim" id="dim"></div>
 
   <!-- the two sticks -->
   <div class="bar top" id="barTop"></div>

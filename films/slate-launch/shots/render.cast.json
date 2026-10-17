@@ -2,194 +2,214 @@
  "command": "node engine/render.mjs films/slate-launch --no-critic",
  "cols": 96,
  "code": 0,
- "duration": 574.4270198649999,
+ "duration": 523.253355194,
  "events": [
   [
-   2.11,
-   "▸ Slate · Take one: 40.20s @ 30fps, 1920×1080, 13 scenes, 100 BPM\n"
+   1.229,
+   "▸ Slate · Take one: 45.00s @ 30fps, 1920×1080, 12 scenes, 100 BPM\n"
   ],
   [
-   47.551,
+   44.955,
    "▸ layout: 2 momentary crossing(s) under 0.3s, ignored\n"
   ],
   [
-   47.552,
+   44.955,
    "▸ layout: every word sits in title-safe, off pictures and off other words\n"
   ],
   [
-   58.372,
-   "\r▸ frames 30/1206 · 2.8 fps · eta 424s   "
+   54.253,
+   "\r▸ frames 30/1350 · 3.2 fps · eta 409s   "
   ],
   [
-   60.696,
-   "▸ score: 40.20s, 100 BPM, glass in D, 192 cues, mastered to -14.0 LUFS -> /home/claude/slate/films/slate-launch/build/mix.wav\n"
+   60.94,
+   "▸ score: 45.00s, 100 BPM, solo in D, 163 cues, mastered to -14.0 LUFS -> /home/claude/slate/films/slate-launch/build/mix.wav\n"
   ],
   [
-   67.133,
-   "\r▸ frames 60/1206 · 3.1 fps · eta 374s   "
+   61.074,
+   "\r▸ frames 60/1350 · 3.7 fps · eta 346s   "
   ],
   [
-   76.498,
-   "\r▸ frames 90/1206 · 3.1 fps · eta 359s   "
+   68.566,
+   "\r▸ frames 90/1350 · 3.8 fps · eta 330s   "
   ],
   [
-   84.474,
-   "\r▸ frames 120/1206 · 3.3 fps · eta 334s   "
+   75.86,
+   "\r▸ frames 120/1350 · 3.9 fps · eta 317s   "
   ],
   [
-   91.873,
-   "\r▸ frames 150/1206 · 3.4 fps · eta 312s   "
+   82.525,
+   "\r▸ frames 150/1350 · 4.0 fps · eta 301s   "
   ],
   [
-   98.403,
-   "\r▸ frames 180/1206 · 3.5 fps · eta 290s   "
+   88.801,
+   "\r▸ frames 180/1350 · 4.1 fps · eta 285s   "
   ],
   [
-   104.577,
-   "\r▸ frames 210/1206 · 3.7 fps · eta 270s   "
+   94.752,
+   "\r▸ frames 210/1350 · 4.2 fps · eta 270s   "
   ],
   [
-   111.014,
-   "\r▸ frames 240/1206 · 3.8 fps · eta 255s   "
+   100.797,
+   "\r▸ frames 240/1350 · 4.3 fps · eta 258s   "
   ],
   [
-   117.72,
-   "\r▸ frames 270/1206 · 3.8 fps · eta 243s   "
+   106.445,
+   "\r▸ frames 270/1350 · 4.4 fps · eta 246s   "
   ],
   [
-   128.292,
-   "\r▸ frames 300/1206 · 3.7 fps · eta 244s   "
+   111.936,
+   "\r▸ frames 300/1350 · 4.5 fps · eta 234s   "
   ],
   [
-   139.887,
-   "\r▸ frames 330/1206 · 3.6 fps · eta 245s   "
+   117.95,
+   "\r▸ frames 330/1350 · 4.5 fps · eta 226s   "
   ],
   [
-   150.852,
-   "\r▸ frames 360/1206 · 3.5 fps · eta 243s   "
+   123.753,
+   "\r▸ frames 360/1350 · 4.6 fps · eta 217s   "
   ],
   [
-   162.518,
-   "\r▸ frames 390/1206 · 3.4 fps · eta 241s   "
+   130.569,
+   "\r▸ frames 390/1350 · 4.6 fps · eta 211s   "
   ],
   [
-   173.49,
-   "\r▸ frames 420/1206 · 3.3 fps · eta 236s   "
+   137.467,
+   "\r▸ frames 420/1350 · 4.5 fps · eta 205s   "
   ],
   [
-   184.385,
-   "\r▸ frames 450/1206 · 3.3 fps · eta 230s   "
+   144.765,
+   "\r▸ frames 450/1350 · 4.5 fps · eta 200s   "
   ],
   [
-   196.15,
-   "\r▸ frames 480/1206 · 3.2 fps · eta 225s   "
+   152.462,
+   "\r▸ frames 480/1350 · 4.5 fps · eta 195s   "
   ],
   [
-   207.016,
-   "\r▸ frames 510/1206 · 3.2 fps · eta 218s   "
+   160.209,
+   "\r▸ frames 510/1350 · 4.4 fps · eta 190s   "
   ],
   [
-   218.522,
-   "\r▸ frames 540/1206 · 3.2 fps · eta 211s   "
+   167.87,
+   "\r▸ frames 540/1350 · 4.4 fps · eta 184s   "
   ],
   [
-   229.558,
-   "\r▸ frames 570/1206 · 3.1 fps · eta 203s   "
+   175.515,
+   "\r▸ frames 570/1350 · 4.4 fps · eta 179s   "
   ],
   [
-   238.792,
-   "\r▸ frames 600/1206 · 3.1 fps · eta 193s   "
+   183.311,
+   "\r▸ frames 600/1350 · 4.3 fps · eta 173s   "
   ],
   [
-   246.464,
-   "\r▸ frames 630/1206 · 3.2 fps · eta 182s   "
+   190.837,
+   "\r▸ frames 630/1350 · 4.3 fps · eta 167s   "
   ],
   [
-   254.229,
-   "\r▸ frames 660/1206 · 3.2 fps · eta 171s   "
+   198.935,
+   "\r▸ frames 660/1350 · 4.3 fps · eta 161s   "
   ],
   [
-   261.915,
-   "\r▸ frames 690/1206 · 3.2 fps · eta 160s   "
+   206.838,
+   "\r▸ frames 690/1350 · 4.3 fps · eta 155s   "
   ],
   [
-   269.748,
-   "\r▸ frames 720/1206 · 3.2 fps · eta 150s   "
+   214.306,
+   "\r▸ frames 720/1350 · 4.3 fps · eta 148s   "
   ],
   [
-   277.331,
-   "\r▸ frames 750/1206 · 3.3 fps · eta 140s   "
+   222.109,
+   "\r▸ frames 750/1350 · 4.2 fps · eta 142s   "
   ],
   [
-   285.181,
-   "\r▸ frames 780/1206 · 3.3 fps · eta 130s   "
+   229.471,
+   "\r▸ frames 780/1350 · 4.2 fps · eta 135s   "
   ],
   [
-   292.043,
-   "\r▸ frames 810/1206 · 3.3 fps · eta 120s   "
+   236.239,
+   "\r▸ frames 810/1350 · 4.2 fps · eta 128s   "
   ],
   [
-   298.688,
-   "\r▸ frames 840/1206 · 3.3 fps · eta 109s   "
+   243.262,
+   "\r▸ frames 840/1350 · 4.2 fps · eta 120s   "
   ],
   [
-   304.818,
-   "\r▸ frames 870/1206 · 3.4 fps · eta 99s   "
+   250.339,
+   "\r▸ frames 870/1350 · 4.2 fps · eta 113s   "
   ],
   [
-   311.179,
-   "\r▸ frames 900/1206 · 3.4 fps · eta 90s   "
+   257.763,
+   "\r▸ frames 900/1350 · 4.2 fps · eta 106s   "
   ],
   [
-   318.726,
-   "\r▸ frames 930/1206 · 3.4 fps · eta 80s   "
+   265.07,
+   "\r▸ frames 930/1350 · 4.2 fps · eta 99s   "
   ],
   [
-   326.959,
-   "\r▸ frames 960/1206 · 3.4 fps · eta 72s   "
+   272.18,
+   "\r▸ frames 960/1350 · 4.2 fps · eta 92s   "
   ],
   [
-   336.197,
-   "\r▸ frames 990/1206 · 3.4 fps · eta 63s   "
+   278.799,
+   "\r▸ frames 990/1350 · 4.2 fps · eta 85s   "
   ],
   [
-   350.597,
-   "\r▸ frames 1020/1206 · 3.4 fps · eta 55s   "
+   286.549,
+   "\r▸ frames 1020/1350 · 4.2 fps · eta 78s   "
   ],
   [
-   365.001,
-   "\r▸ frames 1050/1206 · 3.3 fps · eta 47s   "
+   293.611,
+   "\r▸ frames 1050/1350 · 4.2 fps · eta 71s   "
   ],
   [
-   373.979,
-   "\r▸ frames 1080/1206 · 3.3 fps · eta 38s   "
+   301.16,
+   "\r▸ frames 1080/1350 · 4.2 fps · eta 64s   "
   ],
   [
-   382.503,
-   "\r▸ frames 1110/1206 · 3.3 fps · eta 29s   "
+   308.867,
+   "\r▸ frames 1110/1350 · 4.2 fps · eta 57s   "
   ],
   [
-   391.453,
-   "\r▸ frames 1140/1206 · 3.3 fps · eta 20s   "
+   316.203,
+   "\r▸ frames 1140/1350 · 4.2 fps · eta 50s   "
   ],
   [
-   405.378,
-   "\r▸ frames 1170/1206 · 3.3 fps · eta 11s   "
+   323.243,
+   "\r▸ frames 1170/1350 · 4.2 fps · eta 43s   "
   ],
   [
-   442.599,
-   "\r▸ frames 1200/1206 · 3.0 fps · eta 2s   "
+   330.293,
+   "\r▸ frames 1200/1350 · 4.2 fps · eta 36s   "
   ],
   [
-   451.313,
+   336.54,
+   "\r▸ frames 1230/1350 · 4.2 fps · eta 28s   "
+  ],
+  [
+   343.069,
+   "\r▸ frames 1260/1350 · 4.2 fps · eta 21s   "
+  ],
+  [
+   349.826,
+   "\r▸ frames 1290/1350 · 4.2 fps · eta 14s   "
+  ],
+  [
+   357.891,
+   "\r▸ frames 1320/1350 · 4.2 fps · eta 7s   "
+  ],
+  [
+   372.997,
+   "\r▸ frames 1350/1350 · 4.1 fps · eta 0s   "
+  ],
+  [
+   373.288,
    "\n"
   ],
   [
-   451.314,
-   "▸ frames done in 404s\n"
+   373.288,
+   "▸ frames done in 328s\n"
   ],
   [
-   574.408,
+   523.238,
    "▸ video -> out/slate-launch.mp4\n"
   ]
  ]
