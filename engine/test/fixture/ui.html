@@ -1,0 +1,24 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>UI fixture</title>
+<script type="importmap">{"imports":{"gsap":"/engine/node_modules/gsap/index.js","gsap/":"/engine/node_modules/gsap/","slate":"/engine/runtime/slate.js"}}</script>
+<style>
+  html,body{margin:0;background:#fff}
+  .world{position:absolute;left:0;top:0;width:320px;height:180px}
+  .label{position:absolute;left:150px;top:80px;font:500 16px/20px system-ui;white-space:nowrap}
+  .box{position:absolute;left:10px;top:10px;width:60px;height:24px;overflow:hidden;font:500 16px/24px system-ui;white-space:nowrap}
+</style>
+<div data-stage>
+  <div class="world" id="world" data-ui data-audit="off">
+    <span class="label">A whole label</span>
+    <div class="box">clipped by its own box, not by the frame</div>
+  </div>
+</div>
+<script type="module">
+import {film} from 'slate';
+const F = film({fps: 10, width: 320, height: 180, bpm: 120});
+// at t=0 the whole world; at t=1, 4x on a point left of the label, so the frame's right edge cuts it
+window.cam = F.camera(document.getElementById('world'), [{t: 0, x: 160, y: 90, zoom: 1}, {t: 1, x: 140, y: 90, zoom: 4, ease: 'none'}]);
+F.end(1);
+await F.ready();
+</script>

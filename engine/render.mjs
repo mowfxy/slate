@@ -89,17 +89,19 @@ if (opt('stills')) {
 
 // ---- layout audit: sample the film and check where every visible word sits
 async function audit(p) {
-  const step = 1 / 6, found = new Map();
+  const step = 1 / 6, open = new Map(), runs = [];
   for (let t = 0; t < man.duration; t += step) {
     await p.page.evaluate((x) => window.__slate.seek(x), t);
     for (const i of await p.page.evaluate(() => window.__slate.audit())) {
-      const key = i.kind + (i.at || i.what);
-      const f = found.get(key);
-      if (f && t - f.to <= step * 1.5) f.to = t; else if (!f) found.set(key, {...i, from: t, to: t});
+      // one run per problem per stretch of time: the same word cut twice, a minute apart, is two problems
+      const key = i.kind + i.what + (i.at || '');
+      const f = open.get(key);
+      if (f && t - f.to <= step * 1.5) f.to = t;
+      else { const r = {...i, from: t, to: t}; open.set(key, r); runs.push(r); }
     }
   }
   // words in flight (an entrance, a wipe) may cross a margin for a moment; a problem that lasts is a layout problem
-  const all = [...found.values()].map((i) => ({...i, from: +i.from.toFixed(2), to: +i.to.toFixed(2)}));
+  const all = runs.map((i) => ({...i, from: +i.from.toFixed(2), to: +i.to.toFixed(2)}));
   const issues = all.filter((i) => i.to - i.from >= 0.3 - 1e-6);
   if (all.length > issues.length) log(`layout: ${all.length - issues.length} momentary crossing(s) under 0.3s, ignored`);
   fs.writeFileSync(path.join(build, 'layout.json'), JSON.stringify(issues, null, 2));
@@ -112,7 +114,10 @@ if (!draft && !opt('from')) await audit(first);
 
 // ---- score (runs while frames render)
 const python = process.env.PYTHON || 'python3';
-const scoreArgs = [path.join(ROOT, 'tools/score.py'), path.join(build, 'manifest.json'), '--out', build];
+// a film that composes its own score (films/<name>/score.py, built on tools/synth.py) uses it; otherwise the sketch scorer
+const ownScore = path.join(filmDir, 'score.py');
+const scorer = fs.existsSync(ownScore) && !opt('music') ? ownScore : path.join(ROOT, 'tools/score.py');
+const scoreArgs = [scorer, path.join(build, 'manifest.json'), '--out', build];
 if (opt('music')) scoreArgs.push('--music', path.resolve(opt('music')), '--offset', opt('offset', '0'));
 const scoring = new Promise((res) => {
   const p = spawn(python, scoreArgs, {stdio: ['ignore', 'pipe', 'inherit']});
@@ -124,20 +129,35 @@ const scoring = new Promise((res) => {
 const fps = man.fps;
 const from = Math.round(parseFloat(opt('from', 0)) * fps);
 const to = Math.min(Math.round(parseFloat(opt('to', man.duration)) * fps), Math.round(man.duration * fps));
-const blur = draft ? 1 : Math.max(1, man.post.blur | 0);
 const shutter = man.post.shutter ?? 0.5;
 const workers = Math.max(1, parseInt(opt('workers', os.cpus().length), 10));
 const total = to - from;
-const per = Math.ceil(total / workers);
+// subframes per frame: the film's base blur, raised inside its F.blur() windows (fast moves only)
+const blurAt = (f) => {
+  if (draft) return 1;
+  let n = Math.max(1, man.post.blur | 0);
+  for (const w of man.post.windows || []) if (f / fps >= w.from - 1e-6 && f / fps < w.to - 1e-6) n = Math.max(n, w.samples | 0);
+  return n;
+};
+// tasks: runs of frames with one subframe count, cut into pieces of about equal cost, rendered in order by a queue
+const tasks = [];
+for (let f = from; f < to;) {
+  const n = blurAt(f);
+  let e = f;
+  while (e < to && blurAt(e) === n) e++;
+  const piece = Math.max(12, Math.ceil(fps * 2 / n));
+  for (let x = f; x < e; x += piece) tasks.push({a: x, b: Math.min(e, x + piece), blur: n});
+  f = e;
+}
 const started = Date.now();
-let done = 0;
+let done = 0, next = 0;
 
-async function renderChunk(w, page) {
-  const a = from + w * per, b = Math.min(to, a + per);
-  if (a >= b) return null;
-  const file = path.join(build, `chunk${w}.mkv`);
-  // subframes are averaged in ffmpeg: tmix blends `blur` samples spread over the shutter, framestep keeps one per frame
-  const vf = blur > 1 ? [`tmix=frames=${blur}:weights=${'1 '.repeat(blur).trim()}`, `framestep=${blur}`] : [];
+async function renderTask(task, i, page) {
+  const {a, b, blur} = task;
+  const file = path.join(build, `chunk${String(i).padStart(4, '0')}.mkv`);
+  // subframes are averaged in ffmpeg: tmix blends the last `blur` samples, and select keeps the blend that ends on
+  // each frame's last subframe (so a frame is the average of its own samples, never its neighbour's)
+  const vf = blur > 1 ? [`tmix=frames=${blur}:weights=${'1 '.repeat(blur).trim()}`, `select=eq(mod(n\\,${blur})\\,${blur - 1})`, `setpts=N/(${fps}*TB)`] : [];
   const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-c:v', 'png', '-framerate', String(fps * blur), '-i', '-',
     ...(vf.length ? ['-vf', vf.join(',')] : []), '-r', String(fps), '-c:v', 'libx264', '-preset', draft ? 'ultrafast' : 'veryfast', '-crf', draft ? '20' : '8', '-pix_fmt', 'yuv444p', file], {stdio: ['pipe', 'inherit', 'inherit']});
   for (let f = a; f < b; f++) {
@@ -151,7 +171,7 @@ async function renderChunk(w, page) {
     done++;
     if (done % fps === 0) {
       const el = (Date.now() - started) / 1000;
-      process.stdout.write(`\r▸ frames ${done}/${total} · ${(done / el).toFixed(1)} fps · eta ${Math.round((total - done) / (done / el))}s   `);
+      process.stdout.write(`\r▸ frames ${done}/${total} · ${(done / el).toFixed(1)} fps   `);
     }
   }
   ff.stdin.end();
@@ -159,8 +179,11 @@ async function renderChunk(w, page) {
   return file;
 }
 
-const pages = [first, ...await Promise.all(Array.from({length: workers - 1}, () => openPage(scale)))];
-const chunks = (await Promise.all(pages.map((p, w) => renderChunk(w, p)))).filter(Boolean);
+const pages = [first, ...await Promise.all(Array.from({length: Math.min(workers, tasks.length) - 1}, () => openPage(scale)))];
+const chunks = new Array(tasks.length);
+await Promise.all(pages.map(async (p) => { while (next < tasks.length) { const i = next++; chunks[i] = await renderTask(tasks[i], i, p); } }));
+const blurred = tasks.filter((t) => t.blur > 1).reduce((n, t) => n + t.b - t.a, 0);
+if (blurred) log(`motion blur on ${blurred} of ${total} frames`);
 process.stdout.write('\n');
 log(`frames done in ${((Date.now() - started) / 1000).toFixed(0)}s`);
 await browser.close();

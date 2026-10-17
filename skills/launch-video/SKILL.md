@@ -49,14 +49,14 @@ node engine/render.mjs films/<name> --stills 1,9,22,48
 
 Look at every PNG in `films/<name>/build/stills/`. Judge it against the image bar in `video-taste` (real assets, light, depth, material, one focal point, brand type). Fix and repeat until the stills look like frames from a film you'd want to watch. They are cheap, and renders are not.
 
-## 4. Get the footage
+## 4. Put the product in the film
 
-The film is made of real moving pictures. Plan each proof shot as footage, then get it (load `film-engine`, section Footage):
-- **The product's UI:** write a shot script per shot in `films/<name>/shots/` and record it with `node engine/record.mjs`. Real data, real typing, real clicks; record at the picture's aspect and `scale: 1.25`.
-- **A CLI or build:** record the real run with `engine/termcast.mjs`, film it with the terminal player.
-- **People, places, objects:** filmed video the person gives you (`engine/footage.mjs prepare`), or generated atmosphere with Veo if `GEMINI_API_KEY` is set. Never generate the product's UI.
+The proof is the product moving. The default is to put it *in* the film page, live (load `film-engine`, section Live product):
+- **A web product or one you can rebuild faithfully:** build its real UI in the film page (`films/<name>/index.html`, inside a `[data-ui]` world under `F.camera`), with real-looking sample data, and drive it from the timeline: the pointer's path, the press, what lands, moves and reflows. Its state is a function of time (`F.onFrame`), so every frame renders the same twice. The camera can sit at 3× on one control and stay sharp.
+- **Something you can't rebuild** (another company's site, a long real session): record it with `engine/record.mjs` at `scale` ≥ your closest zoom. **A CLI or build:** record the real run with `engine/termcast.mjs`.
+- **People, places, objects:** filmed video the person gives you (`engine/footage.mjs prepare`), or Veo atmosphere if `GEMINI_API_KEY` is set. Never generate the product's UI.
 
-Watch every clip (a contact sheet: `ffmpeg -i footage/x.webm -vf "select='not(mod(n,30))',scale=480:-1,tile=4x2" -frames:v 1 sheet.jpg`). Re-record anything that stutters, starts blank, or shows nothing worth seeing. If there's no way to get footage of something, say so; don't fake it with a sliding screenshot.
+If there's no way to show something real, say so; don't fake it with a sliding screenshot.
 
 ## 5. Write the film
 
@@ -65,13 +65,13 @@ A film is a web page: `films/<name>/index.html` plus its CSS and JS, written new
 - Time everything in beats (`F.b(n)`), with the tempo chosen for the film's energy.
 - Declare each scene with what must be readable (`words`) and its `kind`.
 - Put every word on the grid you chose (see `video-taste`, Layout), then run `node engine/render.mjs films/<name> --audit` and fix every line it prints.
-- Place sound cues on the frames where things happen (`F.cue('land', t)`), and set the score's style, dynamics and ending (`F.music({style, arc, end})`) from the concept's sound.
+- Place sound cues on the frames where things happen (`F.cue('land', t)`), then compose the score for this cut in `films/<name>/score.py` on `tools/synth.py` (load `sound-design`), and mark it with `F.music({key, composed: 'films/<name>/score.py'})`.
 - Preview in a browser with `node engine/serve.mjs`, then open `http://localhost:4173/films/<name>/`, where you can scrub with the arrow keys.
 
 ## 6. Render, critique, fix
 
 ```bash
-node engine/render.mjs films/<name>            # full quality: motion blur, grain, score, critic
+node engine/render.mjs films/<name>            # full quality: motion blur where declared, the film's score, critic
 node engine/render.mjs films/<name> --draft    # half size, no blur: for checking timing
 ```
 
@@ -79,7 +79,7 @@ Load `video-critic`. The critic measures the file and runs the originality check
 
 ## 7. Deliver
 
-Hand over the MP4 in `out/`, a poster frame (`ffmpeg -ss <t> -i out/<name>.mp4 -frames:v 1 poster.png`), the critic report, and two sentences: the idea, and what you'd change with more time (a licensed track, filmed footage of people using it). For other aspect ratios, change `width`/`height` in `film()`, re-check stills (layouts must be redesigned, not cropped), and render again.
+Hand over the MP4 in `out/`, a poster frame (`ffmpeg -ss <t> -i out/<name>.mp4 -frames:v 1 poster.png`), the critic report, and two sentences: the idea, and what you'd change with more time. For other aspect ratios, change `width`/`height` in `film()`, re-check stills (layouts must be redesigned, not cropped), and render again.
 
 ## Rules
 

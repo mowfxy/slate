@@ -1,4 +1,7 @@
 numpy>=1.26
 scipy>=1.11
+numba>=0.59          # the synth's filters
+soundfile>=0.12
+pyloudnorm>=0.1      # mastering to -14 LUFS
 # optional: tempo/onsets for reference study and beat grids
 librosa>=0.10

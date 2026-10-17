@@ -78,8 +78,9 @@ def main():
     check(R, 'Form is chosen', bool(notes.get('form')) and bool(notes.get('sound')),
           f"form: {notes.get('form') or '—'}; sound: {notes.get('sound') or '—'}"[:160] if notes.get('form') or notes.get('sound') else "no form or sound in F.notes()", 'warn')
     m = tl.get('music') or {}
-    check(R, 'Real music', bool(m.get('track')) or m.get('style') == 'room',
-          f"track {m['track']}" if m.get('track') else f"generated sketch score ({m.get('style')}): fine for a draft; for delivery use a supplied or Lyria track (tools/music.py)", 'warn')
+    check(R, 'Real music', bool(m.get('track')) or bool(m.get('composed')) or m.get('style') == 'room',
+          f"track {m['track']}" if m.get('track') else f"composed for this cut ({m['composed']})" if m.get('composed') else
+          f"generated sketch score ({m.get('style')}): fine for a draft; for delivery compose one on tools/synth.py, or use a supplied or Lyria track (tools/music.py)", 'warn')
     first_logo = min([s['start'] for s in tl['scenes'] if s['kind'] == 'logo'] or [dur])
     body = [c for c in detected if c < first_logo - frame]
     lens = np.diff([0] + body + [first_logo]) if body else np.array([first_logo])
@@ -156,12 +157,20 @@ def main():
     # 7. Originality: no stretch of the film may look like a reference film.
     if a.refs and os.path.exists(a.refs):
         o = originality.check(a.video, json.load(open(a.refs)))
+        # near-copies someone looked at and judged a coincidence: F.notes({reviewed: [{from, to, ref, why}]}).
+        # They're listed in the report, not failed; the reason has to be written down, and it's visible to anyone reading it.
+        rev = [r for r in (notes.get('reviewed') or []) if r.get('why')]
+        waived = [n for n in o['near'] if any(r['from'] <= n['t'] <= r['to'] and r.get('ref', n['ref']) == n['ref'] for r in rev)]
+        o['near'] = [n for n in o['near'] if n not in waived]
+        o['share'] = len(o['near']) / o['frames'] if o['frames'] else 0.0
         ts = [n['t'] for n in o['near']]
         worst = max([sum(1 for u in ts if t <= u < t + 2) for t in ts] or [0])
         detail = f"{len(o['near'])}/{o['frames']} frames close to a reference ({100 * o['share']:.1f}%)"
         if o['near']:
             n = min(o['near'], key=lambda x: x['hamming'])
             detail += f"; closest {n['t']}s ~ {n['ref']} @ {n['ref_t']}s"
+        if waived:
+            detail += f"; {len(waived)} more reviewed as coincidence ({'; '.join(r['why'] for r in rev)})"
         check(R, 'Original (not a reference)', o['share'] <= 0.05 and worst < 3, detail)
 
     # 8. Layout: the renderer's audit of where every visible word sat (engine/render.mjs writes layout.json).

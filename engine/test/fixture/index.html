@@ -21,6 +21,7 @@ F.scene('a', {start: 0, end: 1, energy: 0.3}, (tl, el) => {
 F.scene('b', {start: 1, end: 2, kind: 'type', words: 'hi'}, () => {});
 F.type(document.getElementById('t'), 'hi', {at: 1.1, cps: 10});
 F.music({style: 'wood', end: 'button'});
+F.blur(0.3, 0.7, 4); // subframes on part of the film only: frame count and order must still come out right
 F.cue('resolve', 1.5).end(2);
 await F.ready();
 </script>

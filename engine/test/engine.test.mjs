@@ -134,3 +134,20 @@ test('footage plays from exact frames, and an off-screen clip never shows', asyn
   assert.ok(px[1][2] > 200 && px[1][0] < 20, `the blue clip in its scene, got ${px[1]}`);
   assert.ok(near(px[2][0], 50) && px[2][2] < 20, `back to frame 2, and the blue clip hidden, got ${px[2]}`);
 });
+
+test('the camera projects points, and the audit finds a UI label cut by the frame', async () => {
+  const r = await withPage(async (p) => {
+    const out = {};
+    out.p0 = await p.evaluate(() => window.cam.project(0, 160, 90));
+    out.p1 = await p.evaluate(() => window.cam.project(1, 150, 90));
+    await p.evaluate(() => window.__slate.seek(0));
+    out.a0 = await p.evaluate(() => window.__slate.audit());
+    await p.evaluate(() => window.__slate.seek(1));
+    out.a1 = await p.evaluate(() => window.__slate.audit());
+    return out;
+  }, 'ui.html');
+  assert.deepEqual([r.p0.x, r.p0.y, r.p0.zoom], [160, 90, 1]);
+  assert.ok(Math.abs(r.p1.x - (160 + 10 * 4)) < 1e-6 && r.p1.zoom === 4);
+  assert.deepEqual(r.a0, [], 'whole frame: nothing cut (text clipped by its own box does not count)');
+  assert.ok(r.a1.some((i) => i.kind === 'cut by the frame' && i.what.includes('A whole label')));
+});

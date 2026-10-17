@@ -1,7 +1,7 @@
 {
   "name": "slate",
-  "version": "0.2.0",
-  "description": "Original launch films, feature announcements, teasers and ads with taste: concepts drawn from the product, films written as web pages and rendered frame by frame, a score generated from the edit, and a critic that checks sync, readability, loudness and originality.",
+  "version": "0.3.0",
+  "description": "Original launch films, feature announcements, teasers and ads with taste: concepts drawn from the product, the product live in the film and rendered frame by frame at 60 fps, an electronic score composed for each cut, and a critic that checks sync, readability, loudness and originality.",
   "author": {
     "name": "mowfxy"
   },

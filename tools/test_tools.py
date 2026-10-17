@@ -161,3 +161,34 @@ class MusicTest(unittest.TestCase):
         # the scorer picks the fitted track up from the manifest
         res = subprocess.run([sys.executable, os.path.join(HERE, 'score.py'), os.path.join(self.dir, 'build', 'manifest.json'), '--out', os.path.join(self.dir, 'build')], capture_output=True, text=True)
         self.assertEqual(res.returncode, 0, res.stderr)
+
+
+class SynthTest(unittest.TestCase):
+    def test_song_mixes_to_levels_and_loudness(self):
+        import soundfile  # noqa: F401  (pyloudnorm's dependency chain)
+        from synth import Song, active_rms_db
+        s = Song(bpm=120, beats=8, tail=1.0)
+        s.bus('pad', verb=0.4, duck=0.4)
+        s.bus('kick')
+        s.pad([57, 61, 64], at=0, beats=8, cutoff=1200)
+        for b in range(8):
+            s.kick(at=b)
+        with tempfile.TemporaryDirectory() as d:
+            lufs = s.master(os.path.join(d, 'mix.wav'), lufs=-14, levels={'pad': -24, 'kick': -16})
+            self.assertAlmostEqual(lufs, -14, delta=1.0)
+            from scipy.io import wavfile
+            sr, x = wavfile.read(os.path.join(d, 'mix.wav'))
+            self.assertEqual(sr, 48000)
+            self.assertLessEqual(np.abs(x).max(), 10 ** (-0.9 / 20))  # limited under -1 dBFS (plus rounding)
+        # the levels put each bus where the mix says, whatever it came out at
+        self.assertAlmostEqual(active_rms_db(s.buses['pad'] * s.sends['pad']['gain']), -24, delta=0.5)
+        self.assertAlmostEqual(active_rms_db(s.buses['kick'] * s.sends['kick']['gain']), -16, delta=0.5)
+
+    def test_deterministic(self):
+        from synth import Song
+        a, b = Song(bpm=100, beats=4, tail=0.5), Song(bpm=100, beats=4, tail=0.5)
+        for s in (a, b):
+            s.pluck(69, at=0)
+            s.hat(at=1)
+            s.clap(at=2)
+        self.assertTrue(all(np.array_equal(a.buses[k], b.buses[k]) for k in a.buses))

@@ -61,9 +61,10 @@ Pace is how long the viewer is allowed to look. Cut a shot when it has said its 
 
 - **Use the brand's own typefaces.** If there are none, pick one serif or one sans and stay with it. Two voices at most: a display voice for lines, a quiet voice for labels.
 - **≤ 7 words per line, ≤ 2 lines, ≤ 9 words on screen.** Break long thoughts across moments.
-- **Size with restraint.** Main lines 4–6% of frame width (75–110px at 1080p). Big is not confident; space is.
-- **Type moves with the film's move.** If things land, words land. If things focus, words focus. Never a generic fade or typewriter by default.
-- **One accent at most** (a word in the brand color, an italic). No outlines, no gradients on type.
+- **Lines are big and tight.** A line on its own card is the whole frame's subject: 140–180px at 1080p (7–9% of the frame's width), set tight (−0.03 to −0.045em) in the display weight, near-black on true white or white on true black. A light serif at 96px floating in a beige field is what made an earlier Slate film look timid.
+- **The mark is bigger still** (200–260px), on the optical centre, with the tagline a clear step below at about a fifth of its size.
+- **Type moves with the film's move.** If things land, words land. If things focus, words focus. A word rises through its own mask with a long, soft stop (`expo.out`, ~0.9s); it leaves faster than it came (`power3.in`, ~0.4s). Never a generic fade or typewriter by default.
+- **One accent at most** (a word in the brand color, a coloured dot, an italic). No outlines, no gradients on type.
 
 ## 6. Layout
 
@@ -78,27 +79,27 @@ Bad placement is what makes a film look generated. Words that land wherever ther
 ## 7. Image
 
 This is where most AI video looks cheap. The bar:
-- **Real footage, not still images.** A launch film is moving pictures. Record the real product in use with `engine/record.mjs` (smooth, frame-accurate video of any web app, with a real cursor, typing and scrolling), play back a real CLI session with `engine/termcast.mjs`, bring in filmed video with `engine/footage.mjs prepare`, or generate atmosphere with Veo (`engine/footage.mjs generate`). A screenshot sliding across the frame is a slide, not a shot. Stills are for a frozen beat on purpose.
-- **Real product, real assets.** The product's actual UI, its real fonts, logo and colors. Never redraw a UI as boxes. Never zoom footage past its recorded pixels (record at `scale` ≥ your closest zoom).
-- **Show the UI big enough to read.** A whole app window at film size is unreadable and reads as a screenshot. Frame the control or the result that matters, close (2–2.5×), and let the camera follow the action and pull back when the whole view is the point (`F.camera`). The camera does the editing, so product films need few cuts.
-- **Smooth is a frame rate.** Render and record at 60 fps. Ease every camera move in and out; no move starts or stops dead, and nothing bounces except one small, light thing.
-- **Light and depth.** A key light (a warm glow, a gradient pool), real shadows under things that float, depth of field on things far from the focus, a vignette. Flat elements on flat color look like slides.
-- **Material.** Paper has a grain and a soft gradient, glass reflects, cards have a 1px edge and a shadow that tightens as they land. Finish with fine film grain.
-- **Motion blur** only on things moving fast, and with enough subframes (8+) to read as blur; a few subframes stack visible copies, which is worse than none.
+- **The product, live, not a screen recording.** When you can build or embed the product's UI (its HTML and CSS, or a faithful rebuild from its design), put it *in* the film page and drive its state from the timeline: the press, the list that fills, the drag, the reflow. It is moving, it is the real interface, and because it's vector the camera can sit at 3× on one button with every edge sharp. A recording is a flat picture: zoom it and the text goes soft and the compression shows. This is how the best launch films are made (the UI rebuilt as layers, animated per element), and it is Slate's default. Record (`engine/record.mjs`) only what you can't rebuild: someone else's site, a long real session, a terminal (`engine/termcast.mjs`).
+- **Real product, real assets.** The product's actual UI, real fonts, logo and colours. Never redraw a UI as grey boxes. Stills are for a frozen beat on purpose; a screenshot sliding across the frame is a slide, not a shot.
+- **Go close, then show the whole.** Open on the control or the result that matters at 2.4–3×, follow the action, and pull back only when the whole view is the point. The camera does the editing, so product films need few cuts (`F.camera`).
+- **No label cut by the frame.** A word half in frame is the commonest sign of an unconsidered shot. When the camera holds, every label is whole or entirely out: put the frame's edges in the gaps between rows. Mark the UI `data-ui` and the audit fails any word the frame cuts for more than 0.3s.
+- **Full contrast.** True white and near-black, with the brand's one accent. No beige haze, no vignette or grain over UI: they turn white into grey and make crisp UI look like a photocopy. Grain is for film-like footage, not interfaces.
+- **Depth from the UI itself.** Things that lift get a shadow that grows as they rise and tightens as they land; the window has a 1px edge and a soft, long shadow on a ground one step darker than white. That's enough.
+- **Smooth is a frame rate.** Render at 60 fps. Every move eases in and out; nothing starts or stops dead, and nothing bounces.
+- **Motion blur where things move fast**, and only there: `F.blur(from, to, 6)` renders subframes on whip moves, flights and fast pushes. A few subframes stack visible copies; six or more read as blur.
 - **One focal point per frame.** If two things compete, cut one or blur one.
-- **Color from the product.** Ground, ink, one accent, all from the brand. A dark product gets a dark film; a white-canvas product gets a white film.
+- **Colour from the product.** Ground, ink, one accent, all from the brand. A dark product gets a dark film; a white-canvas product gets a white film.
 
 ## 8. Sound
 
 Sound is taste you hear. Most generated films fail here the same way: the same bright music, building, stopping, booming. Choose the sound like a music supervisor, from the product's voice and the film's form.
-- **Start from what the product sounds like.** A writing app is a pencil and a quiet room. A developer tool is keys and a terminal bell. A camera app is a shutter. Its own sounds are often a better score than music; `room` (no music at all) is a real choice.
-- **Real music, not composed MIDI.** The music in a delivered film is a real track: one the person supplies, or one Lyria generates from the film's own brief (`tools/music.py`, see `sound-design`). Slate's built-in score is a sketch for drafts; say so if a film goes out with it.
-- **Then pick an ensemble with a reason, at the references' production level.** Launch films and ads are scored with produced music: recorded instruments, a sub, a pocket or a swell, mastered loud. A groove with vibes for an everyday app; plucks over a sub for a reveal; strings and horns for something serious; a bright kit and piano for an optimistic launch. A lone piano or room tone is a deliberate exception, never the default. Write the reason in the notes; "it's the default" is not one.
-- **Fewer instruments, more space.** One instrument played with feeling beats five layers. Rests are part of the music.
-- **The score doesn't have to follow the edit.** It can stay steady while the picture changes, thin out while the picture gets busier, or finish its phrase after the last cut. Matching every rise is the trailer's habit.
-- **Choose the ending:** a chord that rings, the phrase simply finishing, one short button note, a fade under the end card, or a cut to the room. Silence before the logo is one option among them, not the rule.
-- **Every action has its sound, quietly.** Clicks, keys, landings on their frames, mixed under the music, never louder than it. Foley, not notes: a melodic note on every UI event makes the film sound like a toy.
-- **Don't repeat yourself.** If the last film used a style and an ending, this one needs a reason to use them again.
+- **Start from what the product sounds like.** A writing app is a pencil and a quiet room. A developer tool is keys and a terminal bell. A camera app is a shutter. Its own sounds are often a better score than music; no music at all is a real choice.
+- **Compose electronic, not fake acoustic.** A score written as code can't be played with feeling, so never imitate players: General MIDI pianos, strings and Rhodes sound like a sketch of a band. Synthesizers have no player to fall short of. A detuned pad, a filtered pluck, a sine sub and an 808-style kit are the real instruments when synthesized, and they're what most product music is made of. Each film composes its own score on `tools/synth.py` (see `sound-design`), and a supplied or Lyria track (`tools/music.py`) replaces it when the brief needs a sound synthesis can't make.
+- **Mix by numbers.** Set each bus's level while it plays (`levels=` in `Song.master`), then check the spectrum against the references: a real low end (sub and low together 45–65% of the energy), mids that carry the melody, nothing harsh. A score where the kick is 20 dB louder than the pad is not a mix.
+- **Fewer instruments, more space.** Rests are part of the music. Thin it out for a line of type; bring it back with the product.
+- **The score doesn't have to follow the edit.** It can stay steady while the picture changes, or finish its phrase after the last cut. Matching every rise is the trailer's habit.
+- **Choose the ending:** a chord that rings, the phrase finishing, one short button note, a fade, or a cut to the room.
+- **Every action has its sound, quietly.** Clicks, ticks, a breath of air on a flight, mixed under the music. Foley, not notes: a melodic note on every UI event makes the film sound like a toy. Keep a note for the one thing the film is about (Dayline's dot gets the film's only bell).
 - **Master to −14 LUFS** (web), −12 to −13 (social feeds), true peak ≤ −1 dBTP.
 
 ## 9. Format
@@ -119,5 +120,5 @@ Sound is taste you hear. Most generated films fail here the same way: the same b
 - The sound: what the product itself sounds like, the ensemble and why, and the ending.
 - The palette and the type.
 - The grid: where every kind of words goes.
-- The footage: what will be recorded, filmed or generated for each shot.
+- The product: what is built live in the page, what (if anything) has to be recorded, and each shot's framing.
 - The first frame and the last frame.

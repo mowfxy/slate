@@ -91,11 +91,12 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
      * a push from 1x to 4x feels even, and the frame never shows past the picture's edge. The camera is
      * a pure function of time: it renders the same at any frame, in any order, with motion blur.
      */
-    camera(el, keys, {of = null, ease = 'power3.inOut'} = {}) {
+    camera(el, keys, {of = null, ease = 'power3.inOut', clamp = true} = {}) {
       keys = [...keys].sort((a, b) => a.t - b.t);
       el.style.transformOrigin = '0 0';
       const eases = keys.map((k) => gsap.parseEase(k.ease || ease));
-      cameras.push((t) => {
+      // the camera's state at time t: zoom z, and the offset that puts the framed point at the centre
+      const state = (t) => {
         const W = el.offsetWidth, H = el.offsetHeight, k = of ? W / of.width : 1;
         const pw = W / k, ph = H / k; // the picture's size in key units
         let i = 0;
@@ -105,12 +106,25 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
         const mix = (u, v) => u + (v - u) * p;
         const z = Math.exp(mix(Math.log(a.zoom ?? 1), Math.log(b.zoom ?? 1)));
         let x = mix(a.x ?? pw / 2, b.x ?? pw / 2) * k, y = mix(a.y ?? ph / 2, b.y ?? ph / 2) * k;
-        x = Math.max(W / (2 * z), Math.min(W - W / (2 * z), x));
-        y = Math.max(H / (2 * z), Math.min(H - H / (2 * z), y));
-        el.style.transform = `translate(${W / 2 - x * z}px, ${H / 2 - y * z}px) scale(${z})`;
-      });
-      return F;
+        if (clamp) {
+          x = Math.max(W / (2 * z), Math.min(W - W / (2 * z), x));
+          y = Math.max(H / (2 * z), Math.min(H - H / (2 * z), y));
+        }
+        return {z, tx: W / 2 - x * z, ty: H / 2 - y * z, k};
+      };
+      cameras.push((t) => { const {z, tx, ty} = state(t); el.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`; });
+      // where point (x, y) of the picture is on screen at time t: for things that must meet the camera's picture (a
+      // dot that flies out of the UI, a label pinned to a control) without being inside it
+      const project = (t, x, y) => { const {z, tx, ty, k} = state(t); return {x: el.offsetLeft + tx + x * k * z, y: el.offsetTop + ty + y * k * z, zoom: z}; };
+      return {project, state};
     },
+
+    /**
+     * Motion blur where the picture moves fast: render `samples` subframes per frame between `from` and
+     * `to` (film seconds) and average them over the shutter. Use it on whip moves, flights and fast
+     * pushes; elsewhere frames stay single and sharp, so the cost lands only where blur is seen.
+     */
+    blur(from, to, samples = 8) { post.windows = [...(post.windows || []), {from, to, samples}]; return F; },
 
     /** Run fn(t, F) on every rendered frame (canvas, WebGL, anything not driven by the timeline). May return a promise. */
     onFrame(fn) { frameHooks.push(fn); return F; },
@@ -189,6 +203,8 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
       // what clip-path: inset() on the way up leaves of a rect (type built from clipped halves, masks)
       const clipped = (el, r) => {
         for (let e = el; e && e !== stage; e = e.parentElement) {
+          // a mask (overflow hidden) shows only what's inside it: a word that has risen out of its mask is gone
+          if (e !== el && getComputedStyle(e).overflow !== 'visible') r = meet(r, toStage(e.getBoundingClientRect()));
           const m = /^inset\(([^)]*)\)/.exec(getComputedStyle(e).clipPath);
           if (!m) continue;
           const b = toStage(e.getBoundingClientRect());
@@ -217,8 +233,6 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
         texts.push({el, r, text: n.textContent.trim().slice(0, 40), over: !!el.closest('[data-over]'), where: where(el)});
       }
       const pics = [...stage.querySelectorAll('img,video,canvas,[data-picture]')].filter((p) => alpha(p) > 0.15).map((p) => ({p, r: toStage(p.getBoundingClientRect())})).filter((x) => area(x.r) > 1);
-      // is the picture really what's behind the words there, or is something opaque (a bar, a card) covering it?
-      const opaque = (e) => { const cs = getComputedStyle(e); return /^(IMG|VIDEO|CANVAS)$/.test(e.tagName) || e.hasAttribute('data-picture') || cs.backgroundImage !== 'none' || (cs.backgroundColor.match(/[\d.]+/g) || [0, 0, 0, 0]).length === 3 || parseFloat((cs.backgroundColor.match(/[\d.]+/g) || [])[3] ?? 0) > 0.5; };
       const seen = (pic, m) => {
         let hits = 0, n = 0;
         for (let i = 1; i <= 4; i++) for (let j = 1; j <= 2; j++) {
@@ -228,7 +242,34 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
         }
         return hits / n > 0.25;
       };
+      // is the picture really what's behind the words there, or is something opaque (a bar, a card) covering it?
+      const opaque = (e) => { const cs = getComputedStyle(e); return /^(IMG|VIDEO|CANVAS)$/.test(e.tagName) || e.hasAttribute('data-picture') || cs.backgroundImage !== 'none' || (cs.backgroundColor.match(/[\d.]+/g) || [0, 0, 0, 0]).length === 3 || parseFloat((cs.backgroundColor.match(/[\d.]+/g) || [])[3] ?? 0) > 0.5; };
       const issues = [];
+      // UI inside the camera ([data-ui]): its labels are exempt from title-safe and the picture rules (it *is* the
+      // picture), but no word may sit cut by the edge of the frame. Show a label whole or not at all.
+      for (const ui of stage.querySelectorAll('[data-ui]')) {
+        const w2 = document.createTreeWalker(ui, NodeFilter.SHOW_TEXT);
+        for (let n = w2.nextNode(); n; n = w2.nextNode()) {
+          if (!n.textContent.trim()) continue;
+          const el = n.parentElement;
+          if (alpha(el) < 0.3) continue;
+          const range = document.createRange();
+          range.selectNodeContents(n);
+          let r = toStage(range.getBoundingClientRect());
+          // what the app itself clips (a block's overflow, the window) is not the frame's doing
+          for (let e = el; e && e !== ui; e = e.parentElement) if (getComputedStyle(e).overflow !== 'visible') r = meet(r, toStage(e.getBoundingClientRect()));
+          if (area(r) < 4) continue;
+          const inside = meet(r, {x: 0, y: 0, w: width, h: height});
+          const vis = area(inside);
+          // covered by something opaque that isn't the UI (a card over the shot): not seen, not a problem
+          if (vis > 1) {
+            const top = document.elementsFromPoint(box.left + (inside.x + inside.w / 2) * k, box.top + (inside.y + inside.h / 2) * k).find((e) => stage.contains(e) && e !== stage && opaque(e));
+            if (top && !ui.contains(top) && !top.contains(ui)) continue;
+          }
+          // a sliver at the edge reads as a label going out of frame; a word half shown reads as a mistake
+          if (vis > 1 && vis < area(r) * 0.97 && r.h * Math.min(1, vis / area(r)) > 2) issues.push({kind: 'cut by the frame', what: `"${n.textContent.trim().slice(0, 40)}"`, at: where(el), rect: r});
+        }
+      }
       const sx = width * safe, sy = height * safe;
       const frame = {x: 0, y: 0, w: width, h: height};
       for (const t of texts) {

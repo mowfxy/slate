@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Dayline · Give your list a day</title>
+<script type="importmap">{"imports":{"gsap":"/engine/node_modules/gsap/index.js","gsap/":"/engine/node_modules/gsap/","slate":"/engine/runtime/slate.js"}}</script>
+<link rel="stylesheet" href="film.css">
+
+<!--
+  Dayline places a list into a day. The product is live in the film, not recorded: the app below is
+  real HTML and CSS, and the timeline drives it (the press, the flights, the drag, the reflow, the week),
+  so the camera can go as close as it likes and every edge stays sharp.
+-->
+<div data-stage>
+  <div class="lens" id="lens">
+    <div class="world" id="world" data-audit="off" data-ui>
+      <div class="win" id="win">
+        <header>
+          <div class="brand">Dayline<i></i></div>
+          <div class="date">Monday, 20 October</div>
+          <div class="spacer"></div>
+          <div class="seg"><span class="pill" id="pill"></span><button id="dayBtn" class="on">Day</button><button id="weekBtn">Week</button></div>
+          <button class="go" id="go"><span id="goLabel">Place my day</span></button>
+        </header>
+        <aside class="side">
+          <h3>Today <span id="count">9</span></h3>
+          <div id="rows"></div>
+        </aside>
+        <section class="grid" id="grid">
+          <div class="daynames" id="daynames"></div>
+          <div class="hours" id="hours"></div>
+        </section>
+        <div class="blocks" id="blocks"></div>
+        <div class="now" id="now"><b id="nowDot"></b></div>
+        <svg class="cursor" id="cursor" width="30" height="40" viewBox="0 0 30 40"><path d="M3 2v30l7.5-7 5 11.5 5-2.2-5-11.3H26z" fill="#0d0d0c" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- the cards are pages of the same day: hour lines, and the words written on them -->
+  <section data-scene="open" class="card day" data-hours="7" data-grid="60">
+    <div class="ln" data-baseline="492"><span class="m"><span class="w">Nine</span></span> <span class="m"><span class="w">things.</span></span></div>
+    <div class="ln" data-baseline="708"><span class="m"><span class="w">One</span></span> <span class="m"><span class="w">day<span class="stop" id="openStop"></span></span></span></div>
+  </section>
+  <section data-scene="change" class="card day hot" data-hours="12" data-grid="144">
+    <div class="ln" data-baseline="576"><span class="m"><span class="w">Plans</span></span> <span class="m"><span class="w">change.</span></span></div>
+  </section>
+  <section data-scene="mark" class="card mark">
+    <div class="ln word" data-baseline="560"><span class="m"><span class="w">Dayline</span></span><span class="stop" id="markStop"></span></div>
+    <div class="nowline" id="markLine"></div>
+    <div class="ln tag" data-baseline="690"><span class="m"><span class="w">Give your list a day.</span></span></div>
+  </section>
+  <section data-scene="place"></section><section data-scene="move"></section><section data-scene="week"></section>
+  <div class="flydot" id="flydot"></div>
+</div>
+
+<script type="module" src="film.js"></script>

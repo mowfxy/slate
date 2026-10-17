@@ -52,10 +52,11 @@ await F.ready();
 | `F.cue(type, t, extra)` | Sound event. Types: `land` (`i`, `n`, `soft`), `rustle`, `swell` (`len`), `drop` (the music stops until the next `thud`/`hit`; a trailer device), `clap` (`gain`), `thud`, `hit`, `resolve`, `whoosh` (`len`), `flip`, `click`, `key`, `tick`, `glint`, `pop`. |
 | `F.type(el, text, {at, cps, caret})` | Types text in with human rhythm and a key cue per letter. Returns the end time. Use it only when typing *is* the idea. |
 | `await F.footage(name)` | Loads `footage/<name>.json`: the clip's duration, `marks` (named moments) and `events` (every key press and click, with times). |
-| `F.music({style, key, arc, end, fadeLen})` | The score: style, key, dynamics over time and ending. Required: a film without it fails to score. See `sound-design`. |
+| `F.music({key, composed})` | Marks the film's own score (`films/<name>/score.py`, which the renderer runs instead of the sketch scorer). `{track}` for a supplied or Lyria track; `{style, arc, end}` only for the old sketch scorer. See `sound-design`. |
 | `F.cueClip(clip, at, {from, to})` | Puts the clip's own key and click sounds on the film's timeline, for the part that plays from film time `at`. |
 | `F.audit()` | Lists layout problems in the current frame (the renderer calls it; see Layout below). |
-| `F.camera(el, keys, {of: clip})` | A camera on a picture: each key `{t, x, y, zoom, ease}` frames point x,y of it at that zoom, and the move into a key uses its ease. With `of: clip`, x/y are the recorded page's CSS pixels, so you can aim at `clip.rects`. Zoom moves in log space and never shows past the picture's edge. A pure function of time. |
+| `F.camera(el, keys, {of: clip})` | A camera on a picture or a live UI world: each key `{t, x, y, zoom, ease}` frames point x,y of it at that zoom, and the move into a key uses its ease. With `of: clip`, x/y are the recorded page's CSS pixels. Zoom moves in log space and never shows past the edge. A pure function of time. Returns `{project(t, x, y)}`: where a point of the picture is on screen at time t, so something outside the camera (a dot that flies out of the UI) can meet it exactly. |
+| `F.blur(from, to, samples)` | Motion blur for a stretch of the film: `samples` subframes per frame, averaged over the shutter. Only where things move fast; zooms smear text more than pans, so give pushes and pulls 10–14. |
 | `F.onFrame(fn(t))` | Runs every frame, for canvas and WebGL (render your Three.js scene here). |
 | `F.wait(promise)` | Holds the first frame until assets load. |
 | `F.b(n)`, `F.bar(n)`, `F.snap(t, div)` | Beat math. |
@@ -67,6 +68,16 @@ Determinism rules:
 - `<video data-at="12.5" data-from="3" data-rate="1">` plays clip time 3s at film time 12.5s. In a render the video is never seeked: the renderer extracts every clip's frames to `build/frames/<clip>/` and the element shows the exact frame for each film frame as its background (seeking a `<video>` per frame painted stale frames, and flashed the clip's first frame at the start of every parallel chunk). The element keeps its layout and anything animating it. The studio preview still plays the video. Clips must be VP9 WebM (headless Chromium has no H.264); `engine/record.mjs` writes it, `engine/footage.mjs prepare` converts anything else.
 - **Frame rate.** Render at 60 fps (`film({fps: 60})`) and record footage at the same rate. At 30 fps, camera moves and scrolling judder; the reference product films are all 60.
 - Nothing may depend on the wall clock, on load order, or on `Math.random()`.
+
+## Live product
+
+The default way to show a product: build its UI in the film page and drive it from the timeline, instead of recording it. See [`films/dayline`](../../films/dayline).
+
+- Put the app inside a world element the size of the frame, marked `data-ui` (and `data-audit="off"`, so its small labels skip the title-safe rules), and put `F.camera` on it. The UI is vector, so zooming to 3× re-rasterizes sharp. Don't set `will-change: transform` on it, which would scale a bitmap.
+- Lay the app out in its own pixels and keep the geometry in constants (row heights, column x), so the camera and every move can aim at real elements. Measure controls with `offsetLeft`/`offsetTop` (they ignore the camera's transform).
+- Animate state on `tl` (a block's `top`, `left`, `width`; a CSS variable like `--k` for a row turning into a block) and set discrete state (labels, counts, which button is on) in `F.onFrame(t)` as a pure function of time. Never call app event handlers.
+- A pointer is an SVG arrow inside the world: move x and y on different eases so the path arcs, and press with a quick scale to 0.86.
+- **No label cut by the frame.** When the camera holds, every word is whole or out of frame. The audit checks `[data-ui]` text against the frame edges (what the app itself clips doesn't count) and fails a cut that lasts 0.3s. Fix it by moving the frame's edge into a gap between rows.
 
 ## Footage: real moving pictures
 
@@ -122,9 +133,9 @@ Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920
 - **Type in motion:** wrap each word in an `overflow: hidden` mask and move it in by `yPercent`, so it appears through its own line instead of fading in on the page. Animate per letter only for display sizes.
 - **Masks and reveals:** `clip-path: inset()/circle()`, or SVG masks. MorphSVGPlugin (`gsap/MorphSVGPlugin.js`) morphs between shapes, for example a sheet into a logo petal. With SVG children, set `svgOrigin` once with `gsap.set` and never inside a `fromTo` (it drifts).
 - **3D:** CSS 3D for cards, sheets and windows (cheap). Three.js for real geometry, such as surfaces, particles and models. Create the renderer with `preserveDrawingBuffer: true` and render inside `onFrame`.
-- **Real UI:** recorded footage as `<video>` (see Footage). A screenshot only for a deliberate still beat. Crop by translating inside an `overflow:hidden` box; never push past the recorded pixels.
+- **Real UI:** live in the page (see Live product); recorded footage as `<video>` only for what you can't rebuild. A screenshot only for a deliberate still beat.
 - **Light:** a radial-gradient glow layer, a vignette (`post.vignette`), and gradient shading on surfaces that turn.
-- **Grain and motion blur:** set in `F.post`. `blur: n` renders n subframes per frame across `shutter` (0.5 is a 180° shutter). Few subframes don't blur, they stack copies: a camera move with `blur: 3` shows every label three times. At 60 fps leave blur off; use `blur: 8` or more only for genuinely fast moves (whip pans, things flying at the lens), and check a still mid-move.
+- **Motion blur:** `F.blur(from, to, samples)` on the fast stretches only; the renderer splits the film into runs and spends subframes only there. Few subframes don't blur, they stack copies of every label; use 8+ on pans and flights, 10–14 on zooms, and check a still mid-move. **Grain and vignette** (`F.post`) are for film-like footage, never over UI: they turn white into grey.
 
 ## Rendering
 
@@ -139,9 +150,9 @@ node engine/render.mjs films/<name>                    # final: out/<name>.mp4 +
   --audit               only check type placement
 ```
 
-Output: H.264 High at CRF 16 with `aq-mode=3` (keeps paper, gradients and grain from banding), BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, arc, post), runs `tools/score.py` while frames render, then muxes and runs the critic.
+Output: H.264 High at CRF 16 with `aq-mode=3` (keeps paper, gradients and grain from banding), BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, notes, post), runs the film's `score.py` (or the sketch scorer `tools/score.py` if it has none) while frames render, then muxes and runs the critic.
 
-Speed: each subframe is a full browser paint. Heavy filters (many blurred layers) and WebGL on a CPU-only machine are the slow parts. Draft first, then render the final once.
+Speed: on 4 cores a 29s 60 fps film with blur on a third of its frames renders in about 5 minutes. Each subframe is a full browser paint. Heavy filters (many blurred layers) and WebGL on a CPU-only machine are the slow parts. Draft first, then render the final once.
 
 ## Debugging
 

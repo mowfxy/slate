@@ -22,6 +22,8 @@ import sys
 import numpy as np
 
 W, H = 64, 36
+FLAT = 1.5  # grey levels: neighbours closer than this count as flat
+MIN_EDGES = 6  # a frame needs this many non-flat neighbour pairs to have a layout worth comparing
 
 
 def frames(path, every=0.5):
@@ -36,7 +38,11 @@ def dhash(img):
     ys = np.linspace(0, H, 9).astype(int)
     xs = np.linspace(0, W, 10).astype(int)
     small = np.array([[g[ys[i]:ys[i + 1], xs[j]:xs[j + 1]].mean() for j in range(9)] for i in range(8)])
-    return (small[:, 1:] > small[:, :-1]).flatten()
+    # three states per pair of neighbouring blocks: brighter, darker, or flat. On a white UI or a plain card
+    # most neighbours are flat, and a two-state hash would turn their noise into a random layout that matches
+    # any other white frame; flat pairs must match flat pairs
+    d = small[:, 1:] - small[:, :-1]
+    return np.where(np.abs(d) < FLAT, 0, np.sign(d)).astype(np.int8).flatten()
 
 
 def hist(img):
@@ -54,7 +60,7 @@ def fingerprint(path, every=0.5):
     out = []
     for i, f in enumerate(frames(path, every)):
         if informative(f):
-            out.append({'t': round(i * every, 2), 'hash': ''.join('1' if b else '0' for b in dhash(f)), 'hist': {str(k): round(float(v), 4) for k, v in enumerate(hist(f)) if v >= 0.001}})
+            out.append({'t': round(i * every, 2), 'hash': ''.join({1: '1', -1: '0', 0: '='}[int(b)] for b in dhash(f)), 'hist': {str(k): round(float(v), 4) for k, v in enumerate(hist(f)) if v >= 0.001}})
     return out
 
 
@@ -64,7 +70,7 @@ def check(video, refs, every=0.5, max_hamming=10, min_hist=0.72):
     labels = []
     for name, fps in refs.items():
         for fp in fps:
-            ref_hashes.append(np.array([c == '1' for c in fp['hash']]))
+            ref_hashes.append(np.array([{'1': 1, '0': -1, '=': 0}[c] for c in fp['hash']], dtype=np.int8))
             h = np.zeros(512)
             for k, v in fp['hist'].items():
                 h[int(k)] = v
@@ -79,8 +85,13 @@ def check(video, refs, every=0.5, max_hamming=10, min_hist=0.72):
     for i, f in enumerate(frames(video, every)):
         if not informative(f):
             continue
+        h = dhash(f)
+        # a frame with almost no layout (one small mark on a plain ground) matches every other near-empty frame
+        # and proves nothing, like a plain frame
+        if np.count_nonzero(h) < MIN_EDGES:
+            continue
         scored += 1
-        ham = (RH != dhash(f)).sum(axis=1)
+        ham = (RH != h).sum(axis=1)
         inter = np.minimum(RC, hist(f)).sum(axis=1)
         # close on layout AND palette
         hit = np.where((ham <= max_hamming) & (inter >= min_hist))[0]
