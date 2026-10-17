@@ -1,0 +1,11 @@
+{
+  "name": "slate",
+  "owner": {"name": "mowfxy"},
+  "plugins": [
+    {
+      "name": "slate",
+      "source": "./",
+      "description": "Launch videos with taste: director, taste guide, Remotion kit, sound design, critic and reference study skills."
+    }
+  ]
+}

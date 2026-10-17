@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "Slate \u00b7 launch film",
+    "archetype": "demo",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "bpm": 96,
+    "cps": 16
+  },
+  "brand": {
+    "name": "Slate",
+    "accent": "#e8553a",
+    "accent2": "#2f6bff",
+    "ink": "#16150f",
+    "paper": "#faf8f3",
+    "wordmark": "serif",
+    "mark": "slate"
+  },
+  "audio": {
+    "style": "glass",
+    "key": "D"
+  },
+  "scenes": [
+    {
+      "type": "logo",
+      "beats": 3,
+      "backdrop": "white"
+    },
+    {
+      "type": "typeTitle",
+      "beats": 5,
+      "text": "Introducing *Slate*"
+    },
+    {
+      "type": "typeTitle",
+      "beats": 8,
+      "cps": 20,
+      "text": "Launch films with taste, written as code"
+    },
+    {
+      "type": "promptBox",
+      "beats": 8,
+      "cps": 26,
+      "prompt": "Make a 30 second launch film for Fieldnote Sync. Calm, confident, our brand kit.",
+      "chips": [
+        "Fieldnote kit",
+        "16:9 \u00b7 30s"
+      ],
+      "model": "Director",
+      "zoomFrom": 1.7
+    },
+    {
+      "type": "bracketTitle",
+      "beats": 7,
+      "text": "Go from [brief] to (premiere)"
+    },
+    {
+      "type": "uiShot",
+      "beats": 10,
+      "image": "assets/chat.png",
+      "windowTitle": "Slate",
+      "backdrop": "space",
+      "camera": [
+        {
+          "t": 0,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 0.6,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 1.6,
+          "x": 0.6,
+          "y": 0.26,
+          "zoom": 1.9
+        },
+        {
+          "t": 3.2,
+          "x": 0.6,
+          "y": 0.26,
+          "zoom": 1.9
+        },
+        {
+          "t": 4.2,
+          "x": 0.59,
+          "y": 0.55,
+          "zoom": 1.55
+        }
+      ],
+      "cursor": [
+        {
+          "t": 4.6,
+          "x": 0.62,
+          "y": 0.72
+        },
+        {
+          "t": 5.4,
+          "x": 0.53,
+          "y": 0.605,
+          "click": true
+        }
+      ]
+    },
+    {
+      "type": "typeTitle",
+      "beats": 8,
+      "cps": 20,
+      "text": "It watches its own cut before you do"
+    },
+    {
+      "type": "uiShot",
+      "beats": 10,
+      "image": "assets/critic.png",
+      "windowTitle": "Slate \u00b7 Critic",
+      "backdrop": "grid",
+      "camera": [
+        {
+          "t": 0,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 0.5,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 1.4,
+          "x": 0.3,
+          "y": 0.2,
+          "zoom": 2.3
+        },
+        {
+          "t": 2.6,
+          "x": 0.3,
+          "y": 0.2,
+          "zoom": 2.3
+        },
+        {
+          "t": 3.5,
+          "x": 0.41,
+          "y": 0.45,
+          "zoom": 1.75
+        },
+        {
+          "t": 4.6,
+          "x": 0.41,
+          "y": 0.45,
+          "zoom": 1.75
+        },
+        {
+          "t": 5.4,
+          "x": 0.79,
+          "y": 0.5,
+          "zoom": 1.8
+        }
+      ]
+    },
+    {
+      "type": "bracketTitle",
+      "beats": 8,
+      "cps": 24,
+      "text": "Cut to the [beat]. Scored from the (edit)."
+    },
+    {
+      "type": "uiShot",
+      "beats": 8,
+      "image": "assets/timeline.png",
+      "windowTitle": "Slate \u00b7 Timeline",
+      "backdrop": "white",
+      "camera": [
+        {
+          "t": 0,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 0.5,
+          "x": 0.5,
+          "y": 0.5,
+          "zoom": 1
+        },
+        {
+          "t": 1.5,
+          "x": 0.58,
+          "y": 0.42,
+          "zoom": 1.3
+        },
+        {
+          "t": 2.4,
+          "x": 0.58,
+          "y": 0.42,
+          "zoom": 1.3
+        },
+        {
+          "t": 3.4,
+          "x": 0.6,
+          "y": 0.7,
+          "zoom": 1.65
+        },
+        {
+          "t": 4.8,
+          "x": 0.56,
+          "y": 0.7,
+          "zoom": 1.7
+        }
+      ]
+    },
+    {
+      "type": "cardGrid",
+      "beats": 8,
+      "backdrop": "white",
+      "items": [
+        {
+          "material": "horizon",
+          "palette": "dawn"
+        },
+        {
+          "material": "dots",
+          "palette": "coral"
+        },
+        {
+          "material": "constellation"
+        },
+        {
+          "material": "blueprint"
+        },
+        {
+          "material": "cutout",
+          "palette": "archive"
+        },
+        {
+          "material": "gradient",
+          "palette": "violet"
+        },
+        {
+          "material": "topo",
+          "palette": "botanical"
+        },
+        {
+          "material": "horizon",
+          "palette": "dusk"
+        },
+        {
+          "material": "mosaic",
+          "palette": "ocean"
+        },
+        {
+          "material": "rings",
+          "palette": "ember"
+        },
+        {
+          "material": "cells"
+        },
+        {
+          "material": "type",
+          "palette": "ink"
+        },
+        {
+          "material": "halftone",
+          "palette": "teal"
+        },
+        {
+          "material": "horizon",
+          "palette": "forest"
+        }
+      ]
+    },
+    {
+      "type": "bracketTitle",
+      "beats": 7,
+      "cps": 20,
+      "text": "[Launch] anything. (Ship) it beautifully."
+    },
+    {
+      "type": "logoEnd",
+      "beats": 8,
+      "backdrop": "paper",
+      "tagline": "Launch films with taste",
+      "footnote": "Open source \u00b7 Built on Remotion \u00b7 github.com/mowfxy/slate"
+    }
+  ]
+}

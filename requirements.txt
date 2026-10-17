@@ -1,0 +1,4 @@
+numpy>=1.26
+scipy>=1.11
+# optional: tempo/onsets for reference study and beat grids
+librosa>=0.10

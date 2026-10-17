@@ -1,0 +1,7 @@
+node_modules/
+out/
+examples/*/build/
+__pycache__/
+*.pyc
+.DS_Store
+.sheet_*.jpg
