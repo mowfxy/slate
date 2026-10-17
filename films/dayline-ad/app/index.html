@@ -1,0 +1,242 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Dayline</title>
+<!--
+  Dayline: a day planner that places your to-dos into your day. This is a working web app (built for the ad, so the
+  ad can film real use of it): "Place my day" schedules the tray into the timeline, blocks can be dragged and the rest
+  reflows, and the week view fills in. Timing follows ?bpm= so every landing falls on an eighth note of the score.
+-->
+<style>
+  @font-face { font-family: 'Mowafy Serif'; src: url(../assets/fonts/MowafySerif-Regular.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Mowafy Sans'; src: url(../assets/fonts/MowafySans-Regular.woff2) format('woff2'); font-weight: 400; }
+  @font-face { font-family: 'Mowafy Sans'; src: url(../assets/fonts/MowafySans-Medium.woff2) format('woff2'); font-weight: 500; }
+  :root {
+    --paper: #ece6db; --sheet: #fbf9f5; --ink: #1d1c1a; --dim: #8b867d; --line: #e7e1d6; --hour: 56px;
+    --blue: #3d6fd9; --orange: #e0702f; --violet: #7a5ad1; --yellow: #d6a21e; --slate: #5d6b7a; --teal: #1f9a8a; --red: #d2483f; --green: #3f9a4f; --sand: #b08a5a;
+  }
+  * { box-sizing: border-box; margin: 0; user-select: none; }
+  html, body { height: 100%; background: var(--paper); font-family: 'Mowafy Sans', system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; overflow: hidden; }
+  .window { position: absolute; left: 160px; top: 90px; width: 1600px; height: 900px; background: var(--sheet); border-radius: 22px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 30px 80px -30px rgba(60,45,25,.35), 0 2px 8px rgba(60,45,25,.08); overflow: hidden; }
+  header { height: 84px; display: flex; align-items: center; gap: 28px; padding: 0 36px; border-bottom: 1px solid var(--line); }
+  .mark { font: 400 30px/1 'Mowafy Serif', serif; letter-spacing: -.01em; }
+  .mark i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); margin-left: 4px; transform: translateY(-2px); }
+  .date { font-size: 18px; color: var(--dim); }
+  .spacer { flex: 1; }
+  .seg { display: flex; background: #f0ebe2; border-radius: 12px; padding: 4px; }
+  .seg button { font: 500 16px/1 'Mowafy Sans'; border: 0; background: none; padding: 10px 18px; border-radius: 9px; color: var(--dim); }
+  .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .go { font: 500 17px/1 'Mowafy Sans'; border: 0; background: var(--ink); color: #fff; padding: 15px 22px; border-radius: 12px; transition: transform .15s, background .2s; }
+  .go:active { transform: scale(.97); }
+  .go.done { background: #e9e4da; color: var(--dim); }
+
+  .tray { position: absolute; left: 0; top: 84px; bottom: 0; width: 430px; padding: 30px 30px; border-right: 1px solid var(--line); }
+  .tray h3 { font: 500 15px/1 'Mowafy Sans'; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); margin-bottom: 18px; }
+  .card { display: flex; align-items: center; gap: 14px; height: 66px; padding: 0 18px; margin-bottom: 10px; border-radius: 14px; background: #fff; border: 1px solid var(--line);
+    box-shadow: 0 1px 2px rgba(0,0,0,.04); font-size: 19px; }
+  .card .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+  .card .len { margin-left: auto; color: var(--dim); font-size: 16px; }
+  .card.gone { visibility: hidden; }
+  .empty { position: absolute; left: 30px; right: 30px; top: 70px; text-align: center; color: var(--dim); font-size: 18px; opacity: 0; transition: opacity .6s; }
+
+  .grid { position: absolute; left: 430px; right: 0; top: 84px; bottom: 0; overflow: hidden; }
+  .days { position: absolute; left: 92px; right: 40px; top: 14px; height: 30px; display: flex; }
+  .days div { flex: 1; font: 500 15px/30px 'Mowafy Sans'; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; opacity: 0; }
+  .hours { position: absolute; left: 0; right: 0; top: 48px; }
+  .hours div { height: var(--hour); border-top: 1px solid var(--line); position: relative; }
+  .hours span { position: absolute; left: 26px; top: -10px; font-size: 14px; color: var(--dim); background: var(--sheet); padding-right: 8px; }
+  .col { position: absolute; top: 48px; height: calc(var(--hour) * 12); pointer-events: none; }
+  .col .block { pointer-events: auto; }
+  .block { position: absolute; left: 0; right: 0; border-radius: 12px; padding: 10px 16px; background: color-mix(in srgb, var(--c) 13%, #fff);
+    border-left: 4px solid var(--c); color: color-mix(in srgb, var(--c) 70%, #000); font-size: 18px; overflow: hidden; will-change: transform; }
+  .block small { display: block; font-size: 14px; opacity: .7; margin-top: 3px; }
+  .block.short { display: flex; align-items: center; padding: 0 16px; font-size: 16px; }
+  .block.short small { display: inline; margin: 0 0 0 10px; font-size: 13px; }
+  .week .block { padding: 6px 10px; }
+  .week .block small { display: none; }
+  .week .block.short { padding: 0 10px; }
+  .block.lift { box-shadow: 0 18px 40px -12px rgba(40,30,20,.35); z-index: 5; }
+  .now { position: absolute; left: 92px; right: 40px; height: 2px; background: var(--red); top: calc(48px + var(--hour) * 1.66); }
+  .now::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+  .fly { position: fixed; z-index: 50; pointer-events: none; }
+</style>
+
+<div class="window">
+  <header>
+    <div class="mark">Dayline<i></i></div>
+    <div class="date" id="date">Monday, 20 October</div>
+    <div class="spacer"></div>
+    <div class="seg"><button class="on" id="dayBtn">Day</button><button id="weekBtn">Week</button></div>
+    <button class="go" id="go">Place my day</button>
+  </header>
+  <aside class="tray"><h3 id="count">To place · 9</h3><div id="cards"></div><p class="empty" id="empty">All placed.</p></aside>
+  <section class="grid" id="grid">
+    <div class="days" id="days"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div></div>
+    <div class="hours" id="hours"></div>
+  </section>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search);
+const BPM = +(q.get("bpm") || 92), EIGHTH = 30 / BPM, HOUR = 56, START = 8;
+const TASKS = [
+  ['Deep work', 'blue', 9, 2], ['Call with Sam', 'orange', 11, 0.5], ['Review designs', 'violet', 11.5, 1], ['Lunch with Priya', 'yellow', 12.5, 1],
+  ['Write the weekly update', 'slate', 13.5, 0.75], ['Groceries', 'teal', 14.5, 0.5], ['Dentist', 'red', 16, 1], ['Gym', 'green', 18, 1], ['Read', 'sand', 19.5, 0.5],
+];
+const fmt = (h) => { const H = Math.floor(h), M = Math.round((h - H) * 60); const hh = ((H + 11) % 12) + 1; return `${hh}${M ? ':' + String(M).padStart(2, '0') : ''}${H < 12 ? ' AM' : ' PM'}`; };
+const len = (d) => d >= 1 ? `${d}h` : `${Math.round(d * 60)}m`;
+const ease = (x) => 1 - Math.pow(1 - x, 3);
+const back = (x) => { const c = 1.35; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const $ = (s) => document.querySelector(s);
+
+const hours = $('#hours');
+for (let h = START; h <= 20; h++) hours.insertAdjacentHTML('beforeend', `<div><span>${fmt(h)}</span></div>`);
+const cards = $('#cards');
+TASKS.forEach(([name, c, , d], i) => cards.insertAdjacentHTML('beforeend', `<div class="card" data-i="${i}" style="--c:var(--${c})"><span class="dot"></span>${name}<span class="len">${len(d)}</span></div>`));
+const grid = $('#grid');
+const cols = [0, 1, 2, 3, 4].map((d) => { const el = document.createElement('div'); el.className = 'col'; el.dataset.day = d; grid.append(el); return el; });
+let view = 'day';
+function layoutCols(t = 1) {
+  // day view: one wide column; week view: five. t blends between them
+  const W = grid.clientWidth - 92 - 40;
+  cols.forEach((c, d) => {
+    const dayL = 92, dayW = W, wkW = (W - 4 * 14) / 5, wkL = 92 + d * (wkW + 14);
+    const L = d === 0 ? dayL + (wkL - dayL) * t : wkL, Wd = d === 0 ? dayW + (wkW - dayW) * t : wkW;
+    c.style.left = L + 'px'; c.style.width = Wd + 'px';
+  });
+}
+layoutCols(0);
+
+// --- a tiny animation runner on requestAnimationFrame (so a virtual clock can film it frame by frame)
+const anims = [];
+function animate(dur, fn, delay = 0) {
+  return new Promise((res) => anims.push({t0: performance.now() + delay * 1000, dur: dur * 1000, fn, res}));
+}
+(function loop() {
+  const now = performance.now();
+  for (let i = anims.length - 1; i >= 0; i--) {
+    const a = anims[i];
+    if (now < a.t0) continue;
+    const p = Math.min(1, (now - a.t0) / a.dur);
+    a.fn(p);
+    if (p >= 1) { anims.splice(i, 1); a.res(); }
+  }
+  requestAnimationFrame(loop);
+})();
+
+function blockEl([name, c, h, d], day = 0) {
+  const b = document.createElement('div');
+  b.className = 'block';
+  b.style.setProperty('--c', `var(--${c})`);
+  b.innerHTML = `${name}<small>${fmt(h)} – ${fmt(h + d)}</small>`;
+  b.style.top = (h - START) * HOUR + 2 + 'px';
+  b.style.height = d * HOUR - 4 + 'px';
+  b.dataset.h = h; b.dataset.d = d;
+  if (d <= 0.5) b.classList.add('short');
+  cols[day].append(b);
+  return b;
+}
+const placed = [];
+
+/** "Place my day": each card flies to its slot, one per eighth note. */
+async function place() {
+  $('#go').classList.add('done'); $('#go').textContent = 'Placed';
+  const jobs = TASKS.map((task, i) => (async () => {
+    await animate(0.001, () => {}, i * EIGHTH);
+    const card = cards.children[i], from = card.getBoundingClientRect();
+    const b = blockEl(task); b.style.visibility = 'hidden';
+    const to = b.getBoundingClientRect();
+    const fly = card.cloneNode(true); fly.classList.add('fly');
+    Object.assign(fly.style, {left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px', margin: 0});
+    document.body.append(fly); card.classList.add('gone');
+    $('#count').textContent = `To place · ${8 - i}`;
+    await animate(2 * EIGHTH, (p) => {
+      const e = ease(p), arc = Math.sin(Math.PI * p) * -40;
+      fly.style.left = from.left + (to.left - from.left) * e + 'px';
+      fly.style.top = from.top + (to.top - from.top) * e + arc + 'px';
+      fly.style.width = from.width + (to.width - from.width) * e + 'px';
+      fly.style.height = from.height + (to.height - from.height) * e + 'px';
+      fly.style.boxShadow = `0 ${20 * Math.sin(Math.PI * p)}px ${40 * Math.sin(Math.PI * p)}px -10px rgba(40,30,20,.3)`;
+    });
+    fly.remove(); b.style.visibility = 'visible'; placed[i] = b;
+    await animate(0.3, (p) => { b.style.transform = `scale(${1 + 0.035 * (1 - back(p))})`; });
+  })());
+  await Promise.all(jobs);
+  $('#empty').style.opacity = 1;
+}
+
+/** Move a block to a new start; anything it now overlaps slides later or earlier to make room, one per eighth. */
+async function reflow(moved, h) {
+  const items = placed.map((b, i) => ({b, i, h: +b.dataset.h, d: +b.dataset.d}));
+  const me = items.find((x) => x.b === moved); me.h = h;
+  // pack the others in order around the moved one, keeping the dentist fixed
+  const fixed = [me, items[6]];
+  let cursor = 9;
+  const order = items.filter((x) => !fixed.includes(x)).sort((a, b) => a.i - b.i);
+  for (const x of order) {
+    if (x.i >= 7) continue; // the evening stays as it is
+    while (fixed.some((f) => cursor < f.h + f.d && cursor + x.d > f.h)) cursor = Math.min(...fixed.filter((f) => cursor < f.h + f.d && cursor + x.d > f.h).map((f) => f.h + f.d));
+    x.h = cursor; cursor += x.d;
+  }
+  const changed = items.filter((x) => x.h !== +x.b.dataset.h && x !== me);
+  changed.forEach((x, k) => {
+    const y0 = (+x.b.dataset.h - START) * HOUR + 2, y1 = (x.h - START) * HOUR + 2;
+    x.b.dataset.h = x.h; x.b.querySelector('small').textContent = `${fmt(x.h)} – ${fmt(x.h + x.d)}`;
+    animate(2 * EIGHTH, (p) => { x.b.style.top = y0 + (y1 - y0) * back(p) + 'px'; }, (k + 1) * EIGHTH);
+  });
+  return changed.length;
+}
+
+// dragging a block with the pointer, snapping to quarter hours
+let drag = null;
+grid.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest('.block'); if (!b) return;
+  drag = {b, y0: e.clientY, top0: parseFloat(b.style.top)}; b.classList.add('lift');
+});
+addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const top = drag.top0 + (e.clientY - drag.y0);
+  drag.b.style.top = top + 'px';
+  const h = START + Math.round(((top - 2) / HOUR) * 4) / 4, d = +drag.b.dataset.d;
+  drag.b.querySelector('small').textContent = `${fmt(h)} – ${fmt(h + d)}`;
+});
+addEventListener('pointerup', () => {
+  if (!drag) return;
+  const {b} = drag; drag = null; b.classList.remove('lift');
+  const h = START + Math.round(((parseFloat(b.style.top) - 2) / HOUR) * 4) / 4;
+  const y0 = parseFloat(b.style.top), y1 = (h - START) * HOUR + 2;
+  b.dataset.h = h;
+  animate(0.18, (p) => { b.style.top = y0 + (y1 - y0) * ease(p) + 'px'; });
+  reflow(b, h);
+});
+
+/** The week: the day narrows into Monday and Tuesday to Friday fill in, a sixteenth apart. */
+const WEEK = [
+  [['Standup', 'blue', 9, 0.5], ['Design crit', 'violet', 10, 1.5], ['Lunch', 'yellow', 12.5, 1], ['Deep work', 'blue', 14, 2], ['Run', 'green', 18, 1]],
+  [['Deep work', 'blue', 9, 3], ['1:1 with Ana', 'orange', 12.5, 0.5], ['Plan Q4', 'slate', 14, 1.5], ['Pottery', 'sand', 19, 1]],
+  [['Standup', 'blue', 9, 0.5], ['Interviews', 'violet', 10, 2], ['Lunch', 'yellow', 12.5, 1], ['Writing', 'slate', 14.5, 2], ['Gym', 'green', 18, 1]],
+  [['Deep work', 'blue', 9, 2.5], ['Ship review', 'red', 13, 1], ['Groceries', 'teal', 15.5, 0.5], ['Dinner with M.', 'orange', 19, 1]],
+];
+async function week() {
+  $('#weekBtn').classList.add('on'); $('#dayBtn').classList.remove('on');
+  $('#date').textContent = '20 – 24 October';
+  grid.classList.add('week');
+  await animate(2 * EIGHTH, (p) => { layoutCols(ease(p)); document.querySelectorAll('.days div').forEach((d) => (d.style.opacity = p)); });
+  document.querySelectorAll('.block').forEach((b) => (b.style.fontSize = '15px'));
+  const all = WEEK.flatMap((day, d) => day.map((t) => [t, d + 1])).sort((a, b) => a[0][2] - b[0][2] || a[1] - b[1]);
+  await Promise.all(all.map(([t, d], k) => (async () => {
+    await animate(0.001, () => {}, k * EIGHTH / 2);
+    const b = blockEl(t, d); b.style.fontSize = '15px';
+    await animate(EIGHTH, (p) => { b.style.opacity = Math.min(1, p * 2); b.style.transform = `translateY(${(1 - back(p)) * -24}px)`; });
+  })()));
+}
+
+$('#go').addEventListener('click', place);
+$('#weekBtn').addEventListener('click', week);
+// states for recording: ?state=placed starts with the day already planned
+if (q.get('state') === 'placed' || q.get('state') === 'moved') {
+  TASKS.forEach((t, i) => { placed[i] = blockEl(t); cards.children[i].classList.add('gone'); });
+  $('#go').classList.add('done'); $('#go').textContent = 'Placed'; $('#count').textContent = 'To place · 0'; $('#empty').style.opacity = 1;
+}
+window.app = {ready: true, EIGHTH, place, week, reflow, placed};
+</script>

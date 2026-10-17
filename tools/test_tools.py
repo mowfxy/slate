@@ -51,6 +51,18 @@ class ScoreTest(unittest.TestCase):
         # only the room tail rings in the gap
         self.assertLess(np.sqrt((gap ** 2).mean()), 0.5 * np.sqrt((before ** 2).mean()))
 
+    def test_produced_styles_have_a_low_end(self):
+        import sampler
+        if not sampler.available():
+            self.skipTest('no fluidsynth or SoundFont')
+        long = {**TL, 'duration': 8.0, 'scenes': [{**TL['scenes'][0], 'end': 8.0}], 'events': [{'t': 7.0, 'type': 'resolve'}]}
+        for style in ('groove', 'pluck', 'cinema', 'bright'):
+            m = score.compose({**long, 'music': {'key': 'F', 'style': style, 'arc': [[0, 0.7], [8, 0.7]]}}).mean(axis=1)
+            spec = np.abs(np.fft.rfft(m)) ** 2
+            f = np.fft.rfftfreq(len(m), 1 / score.SR)
+            sub = spec[(f >= 20) & (f < 60)].sum() / spec[(f >= 20) & (f < 11000)].sum()
+            self.assertGreater(sub, 0.02, style)  # the references all sit at 10-60%
+
     def test_mix_is_mastered(self):
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, 'manifest.json')

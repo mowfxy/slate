@@ -1,0 +1,30 @@
+@font-face { font-family: 'Mowafy Serif'; src: url(assets/fonts/MowafySerif-Light.woff2) format('woff2'); font-weight: 300; }
+@font-face { font-family: 'Mowafy Serif'; src: url(assets/fonts/MowafySerif-Regular.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Mowafy Sans'; src: url(assets/fonts/MowafySans-Regular.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Mowafy Sans'; src: url(assets/fonts/MowafySans-Medium.woff2) format('woff2'); font-weight: 500; }
+
+/*
+  The frame: 1920×1080 on the app's own paper, so cards and footage are one surface.
+  Type sits on one centre axis; the only colour is the orange of the app's dot.
+*/
+:root {
+  --paper: #ebe5da; --ink: #1d1a16; --soft: #6f675c; --dot: #e8692c;
+  --serif: 'Mowafy Serif', Georgia, serif; --sans: 'Mowafy Sans', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+[data-stage] { background: var(--paper); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; overflow: hidden; }
+[data-scene] { position: absolute; inset: 0; }
+.ground { position: absolute; inset: 0; background: radial-gradient(ellipse 70% 65% at 50% 46%, #efe9df, var(--paper) 75%); }
+
+.shot { background: var(--paper); }
+.shot video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
+
+.card { display: grid; place-items: center; }
+h1 { margin: 0; font: 300 96px/1.1 var(--serif); letter-spacing: -0.02em; white-space: nowrap; }
+.card .w { display: inline-block; will-change: transform; }
+
+.mark { display: grid; place-items: center; }
+.mark h1 { font-weight: 400; font-size: 200px; letter-spacing: -0.025em; display: flex; align-items: baseline; }
+.mark .dot { display: inline-block; width: 34px; height: 34px; border-radius: 50%; background: var(--dot); margin-left: 12px; }
+.sign .tagline { position: absolute; left: 0; right: 0; top: 700px; margin: 0; text-align: center; font: 400 34px/1 var(--sans); color: var(--soft); }

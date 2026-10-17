@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/slate.gif" width="640" alt="Two halves of a line of type snap together like a clapperboard; the bars part on real footage of the film's own code being typed">
+<img src="docs/media/dayline.gif" width="640" alt="In a day-planner app, nine tasks fly from a list into the day's timeline one after another, each landing on an eighth note">
 
 # Slate
 
@@ -8,13 +8,29 @@
 
 Claude skills plus a frame-accurate browser film engine. Give Slate a product, and it finds an idea in the product itself, records real footage of the product in use, writes the film as a web page, renders it with motion blur and grain, scores it from the edit, and checks timing, type placement, loudness and originality before you watch it.
 
-[Watch the example film](docs/media/slate-take-one.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [The film engine](skills/film-engine/SKILL.md)
+[Watch the Dayline ad](docs/media/dayline-in-place.mp4) · [Watch the Slate film](docs/media/slate-take-one.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [The film engine](skills/film-engine/SKILL.md)
 
 </div>
 
 ---
 
-## The example: Slate, "Take one"
+## The example: Dayline, "In place"
+
+A 27-second ad for Dayline, a day planner that places your list into your day. Dayline was built for this film as a working web app, and every product shot is the real app recorded in use: placing a day, dragging one thing to the afternoon while the rest make room, and opening the week.
+
+<a href="docs/media/dayline-in-place.mp4"><img src="docs/media/dayline-frames.jpg" alt="Eight frames from the ad: the line 'Nine things. One day.' on warm paper, tasks flying into the timeline, the planned day, the line 'Plans change.', the day after a block is moved, the week filling in, and the Dayline wordmark with its orange dot over 'Your day, in place.'"></a>
+
+| | |
+|---|---|
+| **The idea** | Dayline gives each thing its place in the day. So the film is one gesture: something lands in its slot, on the beat. |
+| **The move** | *The landing.* A short drop that settles with a small overshoot, at every scale: tasks land in the timeline an eighth note apart, words land on the cards, the week lands a sixteenth at a time, and the name lands last, then its dot. |
+| **The form** | *A groove.* One steady pocket at 92 BPM. Cards and shots change on the bar; the cuts are paper to paper, so the film reads as one surface. No build to a drop, no speed-up, no stop. |
+| **The sound** | A produced groove in F, played on sampled instruments: warm pad, electric piano, an 808 kick and sub, claps on two and four, hats. Every landing is a vibraphone note, so as the day fills the picture plays a rising run. It rings out under the name. Measured against the references: 35% of the energy below 60 Hz (they range 10–60%), −14 LUFS. |
+| **Rejected** | Letters typed out on white with one coloured word, a prompt box with a pull-back, app windows in a dark void: all reference moves. And a solo piano with room tone, which is thin and quiet next to produced launch music. |
+
+Source: [`films/dayline-ad/`](films/dayline-ad), with the app in [`app/`](films/dayline-ad/app). The app takes `?bpm=` so its animations land on the film's grid.
+
+## Another example: Slate, "Take one"
 
 A 45-second launch film for Slate, made with Slate. Every shot is real, recorded footage of this film being made: its source typed in an editor, the studio playing it, the render that made it, its frames, its score and the critic's report on it. It's set in Mowafy Serif and Mowafy Sans.
 
@@ -58,7 +74,7 @@ flowchart LR
 
 **One manifest drives picture and sound.** Scenes, the score's dynamics and every sound cue (a landing, a click, a page flip) are declared in the film. The score is composed from them, so sounds land on the frame.
 
-**Taste in pace and sound, not one formula.** Each film picks a form (the take, call and response, settle, slow reveal, loop, or, rarely, the trailer) and a sound that fits the product. There are eight score styles, from a rubato solo piano and a bowed chorale to a swung electric piano on tape, a marimba, or no music at all. There are five endings: ring, phrase, button, fade and cut. The critic warns when a film falls into the trailer habit without choosing it. See [Form and sound](#form-and-sound).
+**Taste in pace and sound, not one formula.** Each film picks a form (the take, call and response, settle, slow reveal, loop, or, rarely, the trailer) and a sound that fits the product. The score is produced the way launch music is: four styles played on sampled instruments (a groove, plucks over a sub, a cinematic section, a bright band) with a real low end, balanced to what the reference films measure, plus quieter sketch styles and no music at all. There are five endings: ring, phrase, button, fade and cut. The critic warns when a film falls into the trailer habit without choosing it. See [Form and sound](#form-and-sound).
 
 ## Real footage
 
@@ -131,7 +147,18 @@ A launch film doesn't have to build, speed up, go silent and slam the logo. Slat
 | Loop | Even, last frame flows into the first | A repeating figure | The beginning |
 | Trailer | Builds, accelerates, stops dead | Builds, silence, a hit | A slam and the logo |
 
+Launch music is produced: recorded instruments, a real low end, mastered loud. The four default styles are played on sampled instruments and balanced to what the reference films measure.
+
 | Score style | Sound | For |
+|---|---|---|
+| `groove` | Warm pad, electric piano, 808 kick and sub, claps; landings on vibraphone | Everyday apps, ads with a pocket |
+| `pluck` | Harp and celesta arpeggios over a sub drone and strings | Teasers, reveals |
+| `cinema` | Strings, choir, horns, pulsing celli, deep drums | Brand films, stories |
+| `bright` | Strings, piano eighths, bass, a full kit | Optimistic launches |
+
+Quieter synthesized sketch styles are there for films meant to feel small:
+
+| Sketch style | Sound | For |
 |---|---|---|
 | `solo` | One felt piano, rubato, with rests | Personal, considered, crafted |
 | `strings` | A bowed chorale that swells and recedes | Serious, premium, a story |
@@ -148,10 +175,12 @@ Endings are chosen per film: `ring`, `phrase`, `button`, `fade` or `cut`. The fu
 git clone https://github.com/mowfxy/slate && cd slate
 (cd engine && npm install)
 python3 -m pip install -r requirements.txt     # numpy, scipy (+ librosa for reference study)
+sudo apt install fluidsynth musescore-general-soundfont-lossless   # sampled instruments for the score (macOS: brew install fluid-synth + a GM .sf2, set SLATE_SOUNDFONT)
 
 node engine/record.mjs films/slate-launch/shots/code.mjs     # re-record a shot → films/slate-launch/footage/code.webm
 node engine/render.mjs films/slate-launch --stills 2,10,36    # style frames → films/slate-launch/build/stills
 node engine/render.mjs films/slate-launch                     # → out/slate-launch.mp4, score, layout check, critic report
+node engine/render.mjs films/dayline-ad                       # → out/dayline-ad.mp4
 node engine/serve.mjs                                         # the studio at localhost:4173/films/slate-launch/
 ```
 
@@ -175,7 +204,7 @@ The **launch-video** skill directs it. It studies the product, pitches three con
 | [`launch-video`](skills/launch-video/SKILL.md) | The director: product → three concepts → style frames → film → render → critique → deliver |
 | [`video-taste`](skills/video-taste/SKILL.md) | Principles for idea, form, pacing, type, image and sound, plus the do-not-copy list |
 | [`film-engine`](skills/film-engine/SKILL.md) | The runtime API, primitives (camera, depth, landing, masks, 3D, WebGL) and render options |
-| [`sound-design`](skills/sound-design/SKILL.md) | Choosing the sound, eight score styles, five endings, foley cues, supplied tracks, mastering |
+| [`sound-design`](skills/sound-design/SKILL.md) | Choosing the sound, produced and sketch score styles, reference band targets, five endings, foley cues, supplied tracks, mastering |
 | [`video-critic`](skills/video-critic/SKILL.md) | Automated checks, including originality, plus an 8-line taste rubric |
 | [`reference-study`](skills/reference-study/SKILL.md) | Learn principles from videos you like and fingerprint them so renders never copy them |
 
@@ -232,7 +261,7 @@ The originality check compares frames against fingerprints of the reference film
 engine/      runtime (slate.js) and studio, renderer, recorder (record.mjs), termcast, footage tools, players, tests
 films/       one folder per film: index.html, film.css, film.js, assets/, shots/ (shot scripts), footage/ (clips)
 skills/      six Claude skills (the plugin)
-tools/       score.py, critic.py, originality.py, analyze_reference.py, beatgrid.py
+tools/       score.py, arrange.py + sampler.py (sampled score), critic.py, originality.py, analyze_reference.py, beatgrid.py
 docs/media/  README media
 ```
 
@@ -241,7 +270,7 @@ Tests: `node --test engine/test/*.test.mjs` (or `cd engine && npm test`) and `py
 ## Notes
 
 - Built on [GSAP](https://gsap.com) (free for commercial use), [Three.js](https://threejs.org) (MIT), [Playwright](https://playwright.dev) (Apache 2.0) and ffmpeg. There's no per-seat render license.
-- The example film uses Mowafy Serif and Sans under the SIL Open Font License ([`films/slate-launch/assets/fonts/Mowafy-OFL.txt`](films/slate-launch/assets/fonts/Mowafy-OFL.txt)). The studio and the code and terminal players use JetBrains Mono (OFL, [`engine/runtime/fonts`](engine/runtime/fonts)).
+- The example films use Mowafy Serif and Sans under the SIL Open Font License ([`films/slate-launch/assets/fonts/Mowafy-OFL.txt`](films/slate-launch/assets/fonts/Mowafy-OFL.txt)). The studio and the code and terminal players use JetBrains Mono (OFL, [`engine/runtime/fonts`](engine/runtime/fonts)).
 - Use footage, music and logos you have the rights to. The reference films that shaped the taste guide are described and fingerprinted, never included.
 - Headless Chromium can't decode H.264, so all footage is VP9 WebM. The recorder writes it; `engine/footage.mjs prepare` converts anything else.
-- The score is synthesized. A licensed track can replace it with `--music track.wav --offset <downbeat>`.
+- The score is generated from the edit: sampled instruments through FluidSynth (MuseScore General, MIT) when installed, synthesized otherwise. A licensed track can replace it with `--music track.wav --offset <downbeat>`.

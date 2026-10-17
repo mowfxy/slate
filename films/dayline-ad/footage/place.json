@@ -1,0 +1,21 @@
+{
+  "source": "place.mjs",
+  "url": "/films/dayline-ad/app/index.html?bpm=92",
+  "width": 1920,
+  "height": 1080,
+  "scale": 1.5,
+  "fps": 30,
+  "frames": 186,
+  "duration": 6.2,
+  "marks": {
+    "start": 0,
+    "click": 1.5333333333333334
+  },
+  "events": [
+    {
+      "type": "click",
+      "t": 1.5333333333333334
+    }
+  ],
+  "rects": {}
+}

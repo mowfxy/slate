@@ -133,6 +133,15 @@ def main():
         end_db = 20 * np.log10(np.sqrt(np.mean(y[-int(0.25 * sr):].astype(np.float64) ** 2)) + 1e-9)
         check(R, 'Sound resolves at the end', end_db < -30, f"last 0.25s at {end_db:.1f} dBFS", 'warn')
         curve = V.rms_curve(y, sr, step=max(0.5, dur / 40))
+        # produced launch music always has a sub; under 2% below 60 Hz sounds thin next to the references
+        if (tl.get('music') or {}).get('style') not in (None, 'room'):
+            spec = np.abs(np.fft.rfft(y.astype(np.float64))) ** 2
+            f = np.fft.rfftfreq(len(y), 1 / sr)
+            total = spec[(f >= 20) & (f < 11000)].sum() or 1
+            share = lambda lo, hi: 100 * spec[(f >= lo) & (f < hi)].sum() / total
+            sub, low, pres = share(20, 60), share(60, 150), share(2000, 6000)
+            check(R, 'Has a low end', sub >= 2 and sub + low <= 75,
+                  f"{sub:.0f}% below 60 Hz, {low:.0f}% at 60–150 Hz, {pres:.1f}% presence (references: 10–60% sub)", 'warn')
     else:
         check(R, 'Has a soundtrack', False, 'no audio stream')
         curve = []

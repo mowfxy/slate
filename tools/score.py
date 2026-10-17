@@ -54,7 +54,9 @@ PROGRESSIONS = {
     'tape': [(0, [0, 4, 7, 11, 14]), (9, [0, 3, 7, 10, 14]), (2, [0, 3, 7, 10, 17]), (7, [0, 4, 7, 10, 14])],  # Imaj9 vi9 ii11 V9
     'wood': [(0, [0, 4, 7, 12, 14]), (7, [0, 4, 7, 12, 14]), (9, [0, 3, 7, 12, 14]), (5, [0, 4, 7, 12, 14])],
 }
-STYLES = ('solo', 'strings', 'tape', 'wood', 'felt', 'glass', 'pulse', 'room')
+STYLES = ('groove', 'pluck', 'cinema', 'bright', 'solo', 'strings', 'tape', 'wood', 'felt', 'glass', 'pulse', 'room')
+# the arranged styles play real sampled instruments (tools/arrange.py); without a SoundFont they fall back to a synth style
+FALLBACK = {'groove': 'pulse', 'pluck': 'glass', 'cinema': 'strings', 'bright': 'felt'}
 ENDINGS = ('ring', 'phrase', 'button', 'fade', 'cut')
 MAJOR_PENTA = [0, 2, 4, 7, 9]
 
@@ -718,6 +720,14 @@ def compose(man):
     end_music = dur if ending == 'fade' else resolve
     if style == 'room':
         return np.zeros((int(round(dur * SR)), 2))
+    if style in FALLBACK:
+        import arrange
+        import sampler
+        if sampler.available():
+            return arrange.arrange(man, style)
+        print(f"score: no SoundFont found for '{style}' (see tools/sampler.py); using the synth style '{FALLBACK[style]}'")
+        style = FALLBACK[style]
+        prog = PROGRESSIONS[style]
     r = rng(11)
 
     def quiet(t):

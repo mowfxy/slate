@@ -1,6 +1,6 @@
 ---
 name: sound-design
-description: Score, sound effects and mastering for Slate films - choosing the sound from the product and the film's form, eight distinct score styles and five endings, using a supplied track on the beat grid, foley cues, and loudness targets per platform. Use when choosing music, placing sound cues, fixing sync, or when a render sounds wrong.
+description: Score, sound effects and mastering for Slate films - choosing the sound from the product and the film's form, four produced styles on sampled instruments (groove, pluck, cinema, bright) plus eight sketch styles, five endings, using a supplied track on the beat grid, foley cues, and loudness targets per platform. Use when choosing music, placing sound cues, fixing sync, or when a render sounds wrong.
 ---
 
 # Sound design
@@ -13,10 +13,39 @@ Decide in this order, and write each answer in `F.notes({sound})`:
 1. **What does the product sound like?** Its clicks, keys, pages, shutter, notification. If those sounds can carry the film, use `room` and no music.
 2. **What does the film's form need?** (See `video-taste` §3.) A take wants one steady instrument; a settle wants a score that thins out; a slow reveal wants a swell with no rhythm; only a trailer wants a build and a stop.
 3. **Which ensemble, and why this one?** Never reuse the last film's style and ending without a reason.
+4. **Would it sit next to the references?** Launch films and ads are scored with produced music: recorded instruments, a real low end, mastered loud. A lone piano or a room tone sounds like a demo next to them. Reach for a produced style first; use a sketch style only when the film is deliberately quiet and someone asked for that.
+
+## What produced launch music measures like
+
+Measured from five professional launch films and ads (share of energy per band):
+
+| Band | Sub <60 Hz | Low 60–150 | Low-mid 150–500 | Mid 500–2k | Presence 2–6k |
+|---|---|---|---|---|---|
+| Range across the five | 10–60% | 4–33% | 14–35% | 10–36% | 2–5% |
+
+- **There is always a sub.** At least a tenth of the energy sits below 60 Hz: an 808, a sub drone, a bass drum. Below 2% reads as thin, however good the notes are.
+- **Tempo 89–136 BPM**, in a major key or a warm minor; integrated loudness −13 ± 1.5 LUFS.
+- **The texture is a bed plus a lead**: a pad or section underneath, one recognisable lead on top (vibes, plucks, harp, piano), drums or pulse in the middle.
+- **It keeps going.** None of the five stops dead before the logo; they swell, resolve and ring.
 
 ## The generated score
 
 Set it in the film with `F.music({key, style, arc, end})`. Tempo is the film's `bpm`. Each style is its own ensemble and its own way of moving.
+
+### Produced styles (default)
+
+Played on sampled instruments through FluidSynth (`tools/arrange.py`, `tools/sampler.py`), with synthesized 808 kicks, subs, risers and booms, sidechained to the kick and balanced to the band shares above. They need `fluidsynth` and a General MIDI SoundFont (`apt install fluidsynth musescore-general-soundfont-lossless`, or set `SLATE_SOUNDFONT`); without one each falls back to its nearest sketch style and says so.
+
+| Style | Ensemble | Moves by | For |
+|---|---|---|---|
+| `groove` | Warm pad, electric piano, 808 kick and sub, claps on 2 and 4, hats; landings on vibraphone | EP chords become swung stabs, hats go to sixteenths as energy rises | Everyday products, apps, ads with a pocket. 88–100 BPM |
+| `pluck` | Harp and celesta arpeggios over a sub drone and a string section; timpani, then kick and shaker | Arpeggio goes from eighths to sixteenths; strings swell | Teasers, big reveals, wonder. 120–140 BPM |
+| `cinema` | Strings, basses, oohs, celli pulsing in eighths, horns, deep drums on hits | The section swells, the pulse and horns enter | Brand films, stories, something serious. 70–100 BPM |
+| `bright` | Strings, piano eighths, fingered bass, a full kit | Builds by layers, stays light | Optimistic consumer launches. 100–124 BPM |
+
+### Sketch styles (synthesized)
+
+Quieter, thinner, self-contained. Use when a film is meant to feel small or when no SoundFont is installed.
 
 | Style | Sound | Moves by | For |
 |---|---|---|---|
@@ -44,7 +73,7 @@ Set it in the film with `F.music({key, style, arc, end})`. Tempo is the film's `
 
   Without a `resolve` cue the ending is always `fade`.
 - **`drop`** stops the music dead until the next `thud` or `hit`, while the room keeps ringing. It is a trailer device: use it only when the form calls for it, and never as the default lead-in to the logo.
-- **`land`** and **`hit`** play on the style's own instrument (piano, marimba, Rhodes, bells, strings), so a landing belongs to the score.
+- **`land`** and **`hit`** play on the style's own instrument (vibes, celesta, harp, glockenspiel; piano, marimba, Rhodes, bells, strings in the sketch styles), so a landing belongs to the score. A `land` cue's `i`/`n` picks its pitch from the scale: rising `i` makes a run of landings into a melody.
 - The mix gets a convolution room (larger for `solo` and `strings`), glue compression, a soft clip, and two-pass loudness normalization, then a true-peak limiter so sharp transients don't clip once encoded.
 
 ## Foley cues
@@ -85,5 +114,5 @@ Use licensed or generated music only. Never pull a song from a video you were sh
 You can't listen, so look and measure:
 - `ffmpeg -i build/mix.wav -lavfi showspectrumpic=s=1600x500:scale=log:fscale=log spec.png` shows the layers, the drop (a vertical gap), the landings and the tail.
 - The critic's loudness curve should have the shape you chose: steady for a take, falling for a settle, a hump for a swell.
-- Too much energy below 200 Hz across the whole film means it's muddy: lower the arc or the bass.
+- Compare the band shares with the table above (`python3 tools/critic.py` prints them). Under 2% below 60 Hz is thin; over 70% below 150 Hz is muddy.
 - Tell the person plainly that you checked the sound by measurement and that they should listen.
