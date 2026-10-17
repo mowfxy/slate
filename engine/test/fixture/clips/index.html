@@ -1,0 +1,23 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Clips fixture</title>
+<script type="importmap">{"imports":{"gsap":"/engine/node_modules/gsap/index.js","gsap/":"/engine/node_modules/gsap/","slate":"/engine/runtime/slate.js"}}</script>
+<style>
+  html,body{margin:0;background:#000}
+  [data-scene]{position:absolute;inset:0;background:#000}
+  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+</style>
+<!-- two clips the test writes to footage/: "count" (red rises 20 per frame) and "blue" -->
+<div data-stage>
+  <section data-scene="a"><video src="footage/count.webm" data-at="0" data-from="0" muted></video></section>
+  <section data-scene="b"><video src="footage/blue.webm" data-at="1" data-from="0" muted></video></section>
+</div>
+<script type="module">
+import {film} from 'slate';
+const F = film({fps: 10, width: 320, height: 180, bpm: 120});
+F.scene('a', {start: 0, end: 1});
+F.scene('b', {start: 1, end: 2});
+F.camera(document.querySelector('[data-scene="a"] video'), [{t: 0, zoom: 1}, {t: 1, zoom: 2}]);
+F.music({style: 'room'}).end(2);
+await F.ready();
+</script>

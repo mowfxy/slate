@@ -1,7 +1,7 @@
 // Drag one thing later in the day; the rest of the morning slides up to fill the gap, one block per eighth note.
 export default {
   url: '/films/dayline-ad/app/index.html?bpm=92&state=placed',
-  width: 1920, height: 1080, scale: 1.5,
+  width: 1920, height: 1080, scale: 2.5, fps: 60, // 60 fps to match the film; 2.5x so the camera can go in close and stay sharp
   ready: () => !!window.app?.ready,
   async run(rec) {
     rec.mark('start');
@@ -9,6 +9,8 @@ export default {
     await rec.hold(0.4);
     const sel = '.col[data-day="0"] .block:nth-child(2)';
     const box = await rec.page.locator(sel).boundingBox();
+    await rec.rect('block', sel);
+    await rec.rect('grid', '#grid');
     const p = {x: box.x + box.width * 0.35, y: box.y + box.height / 2};
     await rec.move(p, {dur: 0.8});
     await rec.page.mouse.down();

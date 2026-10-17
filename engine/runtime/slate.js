@@ -20,6 +20,7 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
   const frameHooks = [];
   const waits = [];
   const typers = [];
+  const cameras = [];
   let duration = null;
   let music = null; // no default sound: every film chooses its own (see skills/sound-design)
   let post = {grain: 0, vignette: 0, blur: 1, shutter: 0.5};
@@ -82,6 +83,35 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
       return t;
     },
 
+    /**
+     * A camera on a picture (a <video>, an image, a mock UI): frame a point of it at a zoom, and move
+     * between framings. keys: [{t, x, y, zoom, ease}], t in film seconds, x/y the point of the picture
+     * to centre, in the picture's own pixels (pass `of: clip` to use the recorded page's CSS pixels, so
+     * you can aim at clip.rects). The move into a key uses that key's ease. Zoom moves in log space, so
+     * a push from 1x to 4x feels even, and the frame never shows past the picture's edge. The camera is
+     * a pure function of time: it renders the same at any frame, in any order, with motion blur.
+     */
+    camera(el, keys, {of = null, ease = 'power3.inOut'} = {}) {
+      keys = [...keys].sort((a, b) => a.t - b.t);
+      el.style.transformOrigin = '0 0';
+      const eases = keys.map((k) => gsap.parseEase(k.ease || ease));
+      cameras.push((t) => {
+        const W = el.offsetWidth, H = el.offsetHeight, k = of ? W / of.width : 1;
+        const pw = W / k, ph = H / k; // the picture's size in key units
+        let i = 0;
+        while (i < keys.length - 1 && keys[i + 1].t <= t) i++;
+        const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
+        const p = b === a || t <= a.t ? 0 : eases[i + 1](Math.min(1, (t - a.t) / (b.t - a.t)));
+        const mix = (u, v) => u + (v - u) * p;
+        const z = Math.exp(mix(Math.log(a.zoom ?? 1), Math.log(b.zoom ?? 1)));
+        let x = mix(a.x ?? pw / 2, b.x ?? pw / 2) * k, y = mix(a.y ?? ph / 2, b.y ?? ph / 2) * k;
+        x = Math.max(W / (2 * z), Math.min(W - W / (2 * z), x));
+        y = Math.max(H / (2 * z), Math.min(H - H / (2 * z), y));
+        el.style.transform = `translate(${W / 2 - x * z}px, ${H / 2 - y * z}px) scale(${z})`;
+      });
+      return F;
+    },
+
     /** Run fn(t, F) on every rendered frame (canvas, WebGL, anything not driven by the timeline). May return a promise. */
     onFrame(fn) { frameHooks.push(fn); return F; },
 
@@ -130,10 +160,12 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
       for (const s of scenes) s.el.style.visibility = s.start <= t + 1e-6 && t < s.end - 1e-6 ? 'visible' : 'hidden';
       tl.totalTime(Math.min(t, tl.totalDuration()), false);
       for (const a of document.getAnimations()) { a.pause(); a.currentTime = t * 1000; }
+      for (const cam of cameras) cam(t);
       for (const {el, text, times} of typers) { let n = 0; while (n < times.length && times[n] <= t + 1e-6) n++; if (el.textContent !== text.slice(0, n)) el.textContent = text.slice(0, n); }
       const vids = [...document.querySelectorAll('video[data-at]')];
       const shown = vids.filter(onScreen);
-      await Promise.all(shown.map((v) => seekVideo(v, clipTime(v, t))));
+      for (const v of vids) if (v.__frames && !shown.includes(v)) v.__frames.canvas.style.display = 'none';
+      await Promise.all(shown.map((v) => (v.__frames ? showFrame(v, clipTime(v, t)) : seekVideo(v, clipTime(v, t)))));
       // a video that has just come on screen gets an extra paint, so its first frame is never blank
       if (shown.some((v) => !v.__shown)) await frames(2);
       for (const v of vids) v.__shown = shown.includes(v);
@@ -215,8 +247,10 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
 
     async ready() {
       await document.fonts.ready;
+      // in a render, clips play from the frames the renderer extracted, so every frame is exact (see useFrames)
+      if (params.has('render')) await Promise.all([...document.querySelectorAll('video[data-at]')].map(useFrames));
       await Promise.all([...document.images].map((im) => im.decode().catch(() => {})));
-      await Promise.all([...document.querySelectorAll('video')].map((v) => v.readyState >= 2 ? null : new Promise((res) => {
+      await Promise.all([...document.querySelectorAll('video')].map((v) => v.__frames || v.readyState >= 2 ? null : new Promise((res) => {
         v.muted = true; v.preload = 'auto';
         v.addEventListener('loadeddata', res, {once: true});
         v.addEventListener('error', () => {
@@ -229,7 +263,7 @@ export function film({fps = 30, width = 1920, height = 1080, bpm = 120, title = 
       })));
       await Promise.all(waits);
       // warm each clip's decoder at the point it first plays, so the first frame of a shot never waits on a long seek
-      await Promise.all([...document.querySelectorAll('video[data-at]')].filter((v) => v.readyState >= 1).map((v) => seekVideo(v, parseFloat(v.dataset.from || 0))));
+      await Promise.all([...document.querySelectorAll('video[data-at]')].filter((v) => !v.__frames && v.readyState >= 1).map((v) => seekVideo(v, parseFloat(v.dataset.from || 0))));
       const api = {manifest: () => F.manifest(), seek: (t) => F.seek(t), audit: (o) => F.audit(o)};
       window.__slate = api;
       if ((!navigator.webdriver && !params.has('still') && !params.has('render')) || params.has('preview')) preview(F);
@@ -246,7 +280,68 @@ function frames(n) { return new Promise((res) => { const step = () => (n-- <= 0 
 
 // <video data-at="12" data-from="3.5" data-rate="1">: clip time 3.5s plays at film time 12s
 function clipTime(v, t) { return parseFloat(v.dataset.from || 0) + (t - parseFloat(v.dataset.at)) * parseFloat(v.dataset.rate || 1); }
-function onScreen(v) { const s = v.closest('[data-scene]'); return v.readyState >= 1 && (!s || s.style.visibility !== 'hidden') && getComputedStyle(v).visibility !== 'hidden'; }
+function onScreen(v) { const s = v.closest('[data-scene]'); return (v.__frames || v.readyState >= 1) && (!s || s.style.visibility !== 'hidden') && getComputedStyle(v).visibility !== 'hidden'; }
+
+// Seeking a <video> per frame is not exact: Chromium can paint the previous frame, or the clip's first
+// frame right after a long seek (a flash at the start of every render chunk). Painting decoded images as
+// a CSS background isn't exact either: the paint can lag the style change, and a subframe comes out
+// blank. So a render never seeks video. The renderer extracts each clip's frames (build/frames/<clip>/,
+// see engine/render.mjs), and a canvas laid exactly over the <video> draws the right frame from a decoded
+// bitmap, synchronously, before the screenshot. The <video> keeps its place, its layout and anything the
+// film animates on it (camera, opacity, filters); the canvas copies those every frame.
+async function useFrames(v) {
+  const src = v.getAttribute('src');
+  if (!src) return;
+  const name = src.split('/').pop().replace(/\.\w+$/, '');
+  const base = `build/frames/${name}/`;
+  const res = await fetch(base + 'meta.json').catch(() => null);
+  if (!res?.ok) return; // not extracted: fall back to seeking the video
+  const meta = await res.json();
+  const c = document.createElement('canvas');
+  c.width = meta.width; c.height = meta.height;
+  c.dataset.frames = name;
+  v.after(c);
+  v.__frames = {...meta, base, cache: new Map(), canvas: c, ctx: c.getContext('2d')};
+  v.dataset.fps = meta.fps;
+  v.removeAttribute('src'); // an empty <video> paints nothing; the canvas over it is the picture
+  v.load();
+}
+
+function frameBitmap(v, i) {
+  const f = v.__frames, url = `${f.base}${String(i + 1).padStart(6, '0')}.jpg`;
+  let p = f.cache.get(url);
+  if (!p) {
+    p = fetch(url).then((r) => r.blob()).then((b) => createImageBitmap(b));
+    f.cache.set(url, p);
+    // keep a few decoded and release old ones, so memory stays flat over long clips
+    for (const [k, old] of f.cache) { if (f.cache.size <= 4) break; f.cache.delete(k); old.then((bm) => bm.close()).catch(() => {}); }
+  }
+  return p;
+}
+
+async function showFrame(v, local) {
+  const f = v.__frames, c = f.canvas;
+  const i = Math.max(0, Math.min(f.count - 1, Math.floor(local * f.fps + 1e-6)));
+  const bm = await frameBitmap(v, i);
+  if (i + 1 < f.count) frameBitmap(v, i + 1);
+  // lay the canvas exactly over the video, with whatever the film has done to the video this frame
+  const cs = getComputedStyle(v);
+  Object.assign(c.style, {position: 'absolute', left: v.offsetLeft + 'px', top: v.offsetTop + 'px', width: v.offsetWidth + 'px', height: v.offsetHeight + 'px',
+    transform: cs.transform, transformOrigin: cs.transformOrigin, opacity: cs.opacity, filter: cs.filter, clipPath: cs.clipPath,
+    borderRadius: cs.borderRadius, display: '', pointerEvents: 'none', margin: 0});
+  if (f.drawn === i) return;
+  // object-fit, for the frame inside the element's box
+  const W = v.offsetWidth, H = v.offsetHeight, fit = cs.objectFit;
+  const k = fit === 'cover' ? Math.max(W / f.width, H / f.height) : fit === 'fill' ? null : Math.min(W / f.width, H / f.height);
+  f.ctx.clearRect(0, 0, c.width, c.height);
+  if (!k) f.ctx.drawImage(bm, 0, 0, c.width, c.height);
+  else {
+    const sx = c.width / W, sy = c.height / H; // canvas pixels per CSS pixel of the box
+    const dw = f.width * k, dh = f.height * k;
+    f.ctx.drawImage(bm, ((W - dw) / 2) * sx, ((H - dh) / 2) * sy, dw * sx, dh * sy);
+  }
+  f.drawn = i;
+}
 
 function seekVideo(v, local) {
   v.pause();

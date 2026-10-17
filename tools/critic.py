@@ -77,6 +77,9 @@ def main():
     notes = tl.get('notes') or {}
     check(R, 'Form is chosen', bool(notes.get('form')) and bool(notes.get('sound')),
           f"form: {notes.get('form') or '—'}; sound: {notes.get('sound') or '—'}"[:160] if notes.get('form') or notes.get('sound') else "no form or sound in F.notes()", 'warn')
+    m = tl.get('music') or {}
+    check(R, 'Real music', bool(m.get('track')) or m.get('style') == 'room',
+          f"track {m['track']}" if m.get('track') else f"generated sketch score ({m.get('style')}): fine for a draft; for delivery use a supplied or Lyria track (tools/music.py)", 'warn')
     first_logo = min([s['start'] for s in tl['scenes'] if s['kind'] == 'logo'] or [dur])
     body = [c for c in detected if c < first_logo - frame]
     lens = np.diff([0] + body + [first_logo]) if body else np.array([first_logo])
@@ -122,6 +125,10 @@ def main():
         if here and not any(x['kind'] in HOLD_OK for x in here):
             frozen.append(f"{s:.1f}–{e:.1f}s in {here[-1]['name']}")
     check(R, 'Nothing sits frozen', not frozen, ', '.join(frozen) or 'motion everywhere it should be', 'warn')
+    flashes, stutters = V.glitches(a.video, fps)
+    check(R, 'No flashes', not flashes, ', '.join(f'{t:.2f}s' for t in flashes[:8]) or 'no frame breaks from its neighbours')
+    check(R, 'Smooth motion', len(stutters) <= 2, ', '.join(f'{t:.2f}s' for t in stutters[:8]) or 'no repeated frames inside motion',
+          'warn' if len(stutters) <= 6 else 'fail')
 
     # 6. Sound: loudness on target, peaks safe, and the last moment is quiet.
     if info['has_audio']:

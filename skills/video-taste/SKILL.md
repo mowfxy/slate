@@ -79,10 +79,12 @@ Bad placement is what makes a film look generated. Words that land wherever ther
 
 This is where most AI video looks cheap. The bar:
 - **Real footage, not still images.** A launch film is moving pictures. Record the real product in use with `engine/record.mjs` (smooth, frame-accurate video of any web app, with a real cursor, typing and scrolling), play back a real CLI session with `engine/termcast.mjs`, bring in filmed video with `engine/footage.mjs prepare`, or generate atmosphere with Veo (`engine/footage.mjs generate`). A screenshot sliding across the frame is a slide, not a shot. Stills are for a frozen beat on purpose.
-- **Real product, real assets.** The product's actual UI, its real fonts, logo and colors. Never redraw a UI as boxes. Never zoom footage past its recorded pixels (record at `scale: 1.25` or more if you will push in).
+- **Real product, real assets.** The product's actual UI, its real fonts, logo and colors. Never redraw a UI as boxes. Never zoom footage past its recorded pixels (record at `scale` ≥ your closest zoom).
+- **Show the UI big enough to read.** A whole app window at film size is unreadable and reads as a screenshot. Frame the control or the result that matters, close (2–2.5×), and let the camera follow the action and pull back when the whole view is the point (`F.camera`). The camera does the editing, so product films need few cuts.
+- **Smooth is a frame rate.** Render and record at 60 fps. Ease every camera move in and out; no move starts or stops dead, and nothing bounces except one small, light thing.
 - **Light and depth.** A key light (a warm glow, a gradient pool), real shadows under things that float, depth of field on things far from the focus, a vignette. Flat elements on flat color look like slides.
 - **Material.** Paper has a grain and a soft gradient, glass reflects, cards have a 1px edge and a shadow that tightens as they land. Finish with fine film grain.
-- **Motion blur** on anything moving fast (the engine samples subframes; set `post.blur`).
+- **Motion blur** only on things moving fast, and with enough subframes (8+) to read as blur; a few subframes stack visible copies, which is worse than none.
 - **One focal point per frame.** If two things compete, cut one or blur one.
 - **Color from the product.** Ground, ink, one accent, all from the brand. A dark product gets a dark film; a white-canvas product gets a white film.
 
@@ -90,11 +92,12 @@ This is where most AI video looks cheap. The bar:
 
 Sound is taste you hear. Most generated films fail here the same way: the same bright music, building, stopping, booming. Choose the sound like a music supervisor, from the product's voice and the film's form.
 - **Start from what the product sounds like.** A writing app is a pencil and a quiet room. A developer tool is keys and a terminal bell. A camera app is a shutter. Its own sounds are often a better score than music; `room` (no music at all) is a real choice.
+- **Real music, not composed MIDI.** The music in a delivered film is a real track: one the person supplies, or one Lyria generates from the film's own brief (`tools/music.py`, see `sound-design`). Slate's built-in score is a sketch for drafts; say so if a film goes out with it.
 - **Then pick an ensemble with a reason, at the references' production level.** Launch films and ads are scored with produced music: recorded instruments, a sub, a pocket or a swell, mastered loud. A groove with vibes for an everyday app; plucks over a sub for a reveal; strings and horns for something serious; a bright kit and piano for an optimistic launch. A lone piano or room tone is a deliberate exception, never the default. Write the reason in the notes; "it's the default" is not one.
 - **Fewer instruments, more space.** One instrument played with feeling beats five layers. Rests are part of the music.
 - **The score doesn't have to follow the edit.** It can stay steady while the picture changes, thin out while the picture gets busier, or finish its phrase after the last cut. Matching every rise is the trailer's habit.
 - **Choose the ending:** a chord that rings, the phrase simply finishing, one short button note, a fade under the end card, or a cut to the room. Silence before the logo is one option among them, not the rule.
-- **Every action has its sound, quietly.** Clicks, keys, landings on their frames, mixed under the music, never louder than it.
+- **Every action has its sound, quietly.** Clicks, keys, landings on their frames, mixed under the music, never louder than it. Foley, not notes: a melodic note on every UI event makes the film sound like a toy.
 - **Don't repeat yourself.** If the last film used a style and an ending, this one needs a reason to use them again.
 - **Master to −14 LUFS** (web), −12 to −13 (social feeds), true peak ≤ −1 dBTP.
 

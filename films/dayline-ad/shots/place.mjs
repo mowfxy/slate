@@ -1,10 +1,13 @@
 // The real app: nine to-dos in the tray, one click, and each lands in the day on an eighth note.
 export default {
   url: '/films/dayline-ad/app/index.html?bpm=92',
-  width: 1920, height: 1080, scale: 1.5,
+  width: 1920, height: 1080, scale: 2.5, fps: 60, // 60 fps to match the film; 2.5x so the camera can go in close and stay sharp
   ready: () => !!window.app?.ready,
   async run(rec) {
     rec.mark('start');
+    await rec.rect('go', '#go');
+    await rec.rect('tray', '.tray');
+    await rec.rect('grid', '#grid');
     await rec.cursor(1180, 760);
     await rec.hold(0.5);
     await rec.move('#go', {dur: 0.9});

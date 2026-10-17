@@ -274,11 +274,13 @@ def arrange(man, style):
                         add('drums', t, 0.2, S.SNARE, 70 + 30 * en)
                     add('drums', t, 0.1, S.HAT, 50 + 30 * en + (12 if k8 % 2 == 0 else 0))
 
-    # the film's own moments, on the style's lead instrument
+    # the film's own moments, on the style's lead instrument. A note on every landing (mickey-mousing) turns
+    # the score into a toy, so landings stay foley unless the film asks for notes with music.landings = 'notes'
+    notes_on_landings = (man.get('music') or {}).get('landings') == 'notes'
     scale = [root + 12 + d + 12 * o for o in range(3) for d in MAJOR_PENTA]
     for ev in events:
         t, typ = ev['t'], ev['type']
-        if typ == 'land':
+        if typ == 'land' and notes_on_landings:
             idx = int(round(ev.get('i', 0) / max(1, ev.get('n', 1)) * (len(scale) - 1)))
             add(LEAD[style], t, 1.2, scale[idx] + 12, 62 if ev.get('soft') else 88)
         elif typ == 'hit':

@@ -3,19 +3,38 @@
   "url": "/films/dayline-ad/app/index.html?bpm=92",
   "width": 1920,
   "height": 1080,
-  "scale": 1.5,
-  "fps": 30,
-  "frames": 186,
-  "duration": 6.2,
+  "scale": 2.5,
+  "fps": 60,
+  "frames": 369,
+  "duration": 6.15,
   "marks": {
     "start": 0,
-    "click": 1.5333333333333334
+    "click": 1.55
   },
   "events": [
     {
       "type": "click",
-      "t": 1.5333333333333334
+      "t": 1.55
     }
   ],
-  "rects": {}
+  "rects": {
+    "go": {
+      "x": 1575.0625,
+      "y": 108,
+      "width": 148.9375,
+      "height": 47
+    },
+    "tray": {
+      "x": 160,
+      "y": 174,
+      "width": 430,
+      "height": 816
+    },
+    "grid": {
+      "x": 590,
+      "y": 174,
+      "width": 1170,
+      "height": 816
+    }
+  }
 }

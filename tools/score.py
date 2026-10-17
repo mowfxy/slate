@@ -35,6 +35,7 @@ The default is ring when there is a resolve cue, else fade.
 import argparse
 import json
 import os
+import sys
 import subprocess
 
 import numpy as np
@@ -759,7 +760,7 @@ def compose(man):
     play = voice(style)
     for ev in events:
         typ, t = ev['type'], ev['t']
-        if typ == 'land':
+        if typ == 'land' and (man.get('music') or {}).get('landings') == 'notes':  # opt-in: see arrange.py
             scale = [root + 12 + d + 12 * o for o in range(3) for d in MAJOR_PENTA]
             idx = int(round(ev.get('i', 0) / max(1, ev.get('n', 1)) * (len(scale) - 1)))
             vel = 0.3 if ev.get('soft') else 0.55
@@ -910,6 +911,12 @@ def main():
     a = ap.parse_args()
     man = json.load(open(a.manifest))
     os.makedirs(a.out, exist_ok=True)
+    # a fitted track named by the film (tools/music.py writes music/track.wav) wins over the generated score
+    track = (man.get('music') or {}).get('track')
+    if not a.music and track:
+        a.music = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(a.manifest))), track)
+        if not os.path.exists(a.music):
+            sys.exit(f'score: the film names {track} but there is no such file (make it with tools/music.py)')
     music = load_music(a.music, man['duration'], a.offset) * 0.8 if a.music else compose(man)
     sfx = sound_design(man)
     write(os.path.join(a.out, 'music.wav'), music)

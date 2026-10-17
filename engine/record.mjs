@@ -70,7 +70,7 @@ export async function record(shotFile, {out, draft = false, log = console.log} =
   });
 
   const ff = spawn('ffmpeg', ['-v', 'error', '-y', '-f', 'image2pipe', '-c:v', 'png', '-framerate', String(fps), '-i', '-',
-    '-c:v', 'libvpx-vp9', '-crf', draft ? '34' : '18', '-b:v', '0', '-g', String(fps / 2), '-row-mt', '1', '-deadline', 'good', '-cpu-used', draft ? '8' : '3',
+    '-c:v', 'libvpx-vp9', '-crf', draft ? '34' : '18', '-b:v', '0', '-g', String(fps / 2), '-row-mt', '1', '-deadline', 'good', '-cpu-used', draft ? '8' : '4',
     '-pix_fmt', 'yuv420p', out], {stdio: ['pipe', 'inherit', 'inherit']});
 
   let frame = 0, owed = 0;
@@ -80,7 +80,8 @@ export async function record(shotFile, {out, draft = false, log = console.log} =
   const mouse = {x: width / 2, y: height / 2};
 
   async function capture() {
-    const {data} = await cdp.send('Page.captureScreenshot', {format: 'png', optimizeForSpeed: true, fromSurface: true});
+    // a raw CDP capture is in CSS pixels whatever the device scale, so ask for the scale explicitly
+    const {data} = await cdp.send('Page.captureScreenshot', {format: 'png', optimizeForSpeed: true, fromSurface: true, clip: {x: 0, y: 0, width, height, scale}});
     const buf = Buffer.from(data, 'base64');
     if (!ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once('drain', r));
     frame++;

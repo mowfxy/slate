@@ -98,3 +98,28 @@ def tempo_and_onsets(y, sr):
 def bar(value, scale, width=28):
     n = int(round(min(1.0, value / scale) * width)) if scale else 0
     return '█' * n + '·' * (width - n)
+
+
+def frame_diffs(path, w=192, h=108):
+    """Mean absolute change between consecutive frames (0-255 grey, small size), one value per frame step."""
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', path, '-vf', f'scale={w}:{h},format=gray', '-f', 'rawvideo', '-'],
+                         capture_output=True).stdout
+    a = np.frombuffer(raw, np.uint8).reshape(-1, h, w).astype(np.float32)
+    return np.abs(np.diff(a, axis=0)).mean(axis=(1, 2)), a
+
+
+def glitches(path, fps):
+    """Frames that break smooth motion. A flash: one frame unlike both neighbours, which agree with each
+    other (a stale or wrong frame, e.g. a clip showing its first frame after a seek). A stutter: a frame
+    that repeats the one before while the picture moves on both sides (a dropped update)."""
+    d, a = frame_diffs(path)
+    flashes, stutters = [], []
+    for i in range(1, len(a) - 1):
+        around = float(np.abs(a[i + 1] - a[i - 1]).mean())
+        if d[i - 1] > 2.0 and d[i] > 2.0 and around < 0.35 * min(d[i - 1], d[i]):
+            flashes.append(round(i / fps, 3))
+    for i in range(1, len(d) - 1):
+        if d[i] < 0.08 and d[i - 1] > 0.6 and d[i + 1] > 0.6:
+            stutters.append(round((i + 1) / fps, 3))
+    return flashes, stutters
+

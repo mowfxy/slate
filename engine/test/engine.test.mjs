@@ -8,6 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright-core';
 import {serve} from '../serve.mjs';
 import {findChrome} from '../browser.mjs';
+import {extractFrames} from '../frames.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
@@ -109,4 +110,27 @@ test('the server answers byte ranges, so video can seek', async () => {
     assert.equal(res.headers.get('content-range').split('/')[0], 'bytes 2-9');
     assert.equal((await res.text()).length, 8);
   } finally { server.close(); }
+});
+
+test('footage plays from exact frames, and an off-screen clip never shows', async () => {
+  const dir = path.join(fixture, 'clips');
+  fs.mkdirSync(path.join(dir, 'footage'), {recursive: true});
+  const make = (name, expr) => spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', `nullsrc=s=64x36:r=10:d=1,geq=${expr}`,
+    '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuv420p', '-crf', '4', '-b:v', '0', path.join(dir, 'footage', `${name}.webm`)]);
+  make('count', 'r=20*N+10:g=0:b=0');
+  make('blue', 'r=0:g=0:b=230');
+  fs.rmSync(path.join(dir, 'build'), {recursive: true, force: true});
+  extractFrames(dir, path.join(dir, 'build'), () => {});
+  const centre = async (p, t) => {
+    await p.evaluate((x) => window.__slate.seek(x), t);
+    const png = path.join(dir, 'build', 'shot.png');
+    fs.writeFileSync(png, await p.screenshot());
+    const raw = spawnSync('ffmpeg', ['-v', 'error', '-i', png, '-vf', 'crop=1:1:160:90', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']).stdout;
+    return [...raw];
+  };
+  const px = await withPage(async (p) => [await centre(p, 0.55), await centre(p, 1.5), await centre(p, 0.25)], 'clips/index.html');
+  const near = (a, b) => Math.abs(a - b) <= 8;
+  assert.ok(near(px[0][0], 110) && px[0][2] < 20, `frame 5 of the counting clip, got ${px[0]}`);
+  assert.ok(px[1][2] > 200 && px[1][0] < 20, `the blue clip in its scene, got ${px[1]}`);
+  assert.ok(near(px[2][0], 50) && px[2][2] < 20, `back to frame 2, and the blue clip hidden, got ${px[2]}`);
 });

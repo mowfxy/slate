@@ -17,6 +17,7 @@ import {spawn, spawnSync} from 'node:child_process';
 import {chromium} from 'playwright-core';
 import {serve, ROOT} from './serve.mjs';
 import {findChrome} from './browser.mjs';
+import {extractFrames} from './frames.mjs';
 
 const args = process.argv.slice(2);
 const flag = (k) => args.includes(`--${k}`);
@@ -26,6 +27,9 @@ const name = path.basename(filmDir);
 const build = path.join(filmDir, 'build');
 fs.mkdirSync(build, {recursive: true});
 const log = (...m) => console.log('▸', ...m);
+
+// ---- footage: extract every clip's frames once, so the page shows exact frames instead of seeking video
+extractFrames(filmDir, build, log);
 
 const {server, url} = await serve();
 const pageUrl = `${url}/${path.relative(ROOT, filmDir).split(path.sep).join('/')}/index.html?render`;
@@ -50,11 +54,12 @@ async function openPage(scale) {
     await page.waitForFunction(() => window.__slate, null, {timeout: 60000});
   }
   const cdp = await ctx.newCDPSession(page);
-  return {page, cdp, man};
+  return {page, cdp, man, scale};
 }
 
 async function shot(p, file) {
-  const {data} = await p.cdp.send('Page.captureScreenshot', {format: 'png', optimizeForSpeed: true, fromSurface: true});
+  // a raw CDP capture is in CSS pixels whatever the device scale, so the scale is asked for explicitly
+  const {data} = await p.cdp.send('Page.captureScreenshot', {format: 'png', optimizeForSpeed: true, fromSurface: true, clip: {x: 0, y: 0, width: p.man.width, height: p.man.height, scale: p.scale}});
   const buf = Buffer.from(data, 'base64');
   if (file) fs.writeFileSync(file, buf);
   return buf;
@@ -175,7 +180,9 @@ fs.mkdirSync(outDir, {recursive: true});
 const out = path.join(outDir, `${name}${draft ? '-draft' : ''}${from || to < Math.round(man.duration * fps) ? `-${from}-${to}` : ''}.mp4`);
 const audioStart = from / fps;
 const enc = spawnSync('ffmpeg', ['-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-ss', String(audioStart), '-i', path.join(build, 'mix.wav'),
-  '-map', '0:v', '-map', '1:a', '-vf', post.join(','), '-c:v', 'libx264', '-preset', draft ? 'veryfast' : 'slow', '-crf', draft ? '23' : '18', '-profile:v', 'high',
+  '-map', '0:v', '-map', '1:a', '-vf', post.join(','), '-c:v', 'libx264', '-preset', draft ? 'veryfast' : 'slow', '-crf', draft ? '23' : '16', '-profile:v', 'high',
+  // aq-mode 3 spends bits on flat, dark and gradient areas, where grain and soft backgrounds otherwise band and smear
+  '-x264-params', 'aq-mode=3:aq-strength=0.9',
   '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-c:a', 'aac', '-b:a', '256k', '-shortest', '-movflags', '+faststart', out], {stdio: 'inherit'});
 if (enc.status !== 0) process.exit(1);
 for (const c of chunks) fs.rmSync(c);

@@ -32,7 +32,7 @@ films/<name>/footage/     recorded or prepared clips: <shot>.webm + <shot>.json 
 
 ```js
 import {film, seeded, split} from 'slate';
-const F = film({fps: 30, width: 1920, height: 1080, bpm: 84, title: 'Product · Idea'});
+const F = film({fps: 60, width: 1920, height: 1080, bpm: 84, title: 'Product · Idea'});
 const {gsap, tl, b} = F;                 // tl: the one paused timeline; b(n): seconds at beat n
 
 F.scene('open', {start: 0, end: b(8), kind: 'world', energy: 0.3, words: ''}, (tl, el) => {
@@ -55,6 +55,7 @@ await F.ready();
 | `F.music({style, key, arc, end, fadeLen})` | The score: style, key, dynamics over time and ending. Required: a film without it fails to score. See `sound-design`. |
 | `F.cueClip(clip, at, {from, to})` | Puts the clip's own key and click sounds on the film's timeline, for the part that plays from film time `at`. |
 | `F.audit()` | Lists layout problems in the current frame (the renderer calls it; see Layout below). |
+| `F.camera(el, keys, {of: clip})` | A camera on a picture: each key `{t, x, y, zoom, ease}` frames point x,y of it at that zoom, and the move into a key uses its ease. With `of: clip`, x/y are the recorded page's CSS pixels, so you can aim at `clip.rects`. Zoom moves in log space and never shows past the picture's edge. A pure function of time. |
 | `F.onFrame(fn(t))` | Runs every frame, for canvas and WebGL (render your Three.js scene here). |
 | `F.wait(promise)` | Holds the first frame until assets load. |
 | `F.b(n)`, `F.bar(n)`, `F.snap(t, div)` | Beat math. |
@@ -63,7 +64,8 @@ await F.ready();
 
 Determinism rules:
 - Everything time-based goes on `tl` or in `onFrame(t)`. CSS animations are fine, because the renderer seeks them too.
-- `<video data-at="12.5" data-from="3" data-rate="1">` is seeked every frame so that clip time 3s plays at film time 12.5s. Hidden videos are skipped. Video must be VP9 WebM (headless Chromium has no H.264); `engine/record.mjs` writes it, `engine/footage.mjs prepare` converts anything else.
+- `<video data-at="12.5" data-from="3" data-rate="1">` plays clip time 3s at film time 12.5s. In a render the video is never seeked: the renderer extracts every clip's frames to `build/frames/<clip>/` and the element shows the exact frame for each film frame as its background (seeking a `<video>` per frame painted stale frames, and flashed the clip's first frame at the start of every parallel chunk). The element keeps its layout and anything animating it. The studio preview still plays the video. Clips must be VP9 WebM (headless Chromium has no H.264); `engine/record.mjs` writes it, `engine/footage.mjs prepare` converts anything else.
+- **Frame rate.** Render at 60 fps (`film({fps: 60})`) and record footage at the same rate. At 30 fps, camera moves and scrolling judder; the reference product films are all 60.
 - Nothing may depend on the wall clock, on load order, or on `Math.random()`.
 
 ## Footage: real moving pictures
@@ -84,7 +86,7 @@ A shot script drives a real page in Chromium on a virtual clock and captures eve
 // films/<name>/shots/compose.mjs
 export default {
   url: '/films/<name>/app/index.html',   // a path on the Slate server, or any https:// URL
-  width: 1920, height: 800, scale: 1.25,  // record bigger than you show, so a push stays sharp
+  width: 1920, height: 800, scale: 2.5, fps: 60,  // 60 fps like the film; 2.5x so a close-up stays sharp
   ready: () => !!window.app,              // run the clock, uncaptured, until the app has started
   async run(rec) {
     await rec.cursor(1400, 600);
@@ -99,7 +101,7 @@ export default {
 
 `rec` also has `move(to)`, `press(key)`, `do(fn)` (run code in the page), `rect(name, sel)` (save an element's box, for matched cuts) and `t` (clip time). The sidecar JSON has the marks and events; `F.cueClip` turns them into sound.
 
-Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920×800). Order of work: write the film with its `<video>` slots (missing footage renders black with a warning), record, look at the clips, then tune `data-from` and timing.
+Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920×800), at `scale` high enough for your closest framing (zoom 2.5 needs `scale: 2.5`). Order of work: write the film with its `<video>` slots (missing footage renders black with a warning), record, look at the clips, then tune `data-from` and timing.
 
 ## The studio
 
@@ -113,15 +115,16 @@ Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920
 
 ## Primitives (write them per film; these are the patterns)
 
-- **Camera:** animate a wrapper's `scale`/`x`/`y` (2D) or put the world in a `perspective` container and move elements in `translate3d` (3D). Ease in-out; keep pushes to 3–15% unless the push *is* the shot.
+- **Camera on product footage:** `F.camera`. Don't show a whole app window at 1x: at film size its text is unreadable and it reads as a screenshot. Open close (2–2.5x) on the control being used as the pointer arrives, follow the action, and pull back only when the result needs the whole view. Aim at real elements with `rec.rect()` in the shot and `clip.rects` in the film. Keep every label you frame whole: the edge of the frame must not cut words.
+- **Camera on a world:** animate a wrapper's `scale`/`x`/`y` (2D) or put the world in a `perspective` container and move elements in `translate3d` (3D). Ease in-out.
 - **Depth of field:** `filter: blur(px)` proportional to distance from the focus plane, computed in `onFrame`. Keep it under 16px.
-- **Landing / settling:** an arc toward the camera, then down onto the rest pose, with the shadow tightening. Use `power3.inOut` for travel and a small overshoot only for light things.
-- **Type in motion:** `split(el,'words')`, then animate y, opacity and `filter: blur()` with a stagger. Animate per letter only for display sizes.
+- **Landing / settling:** fast in, long soft stop: `expo.out` or `power4.out`. Overshoot (`back.out`) reads as cheap bounce on type and on whole frames; allow it only on one small light thing (a dot, a badge), at `back.out(1.3)` or less. Never move a whole shot on a cut (a frame that jumps 30px at a cut reads as a glitch); let the camera move inside the shot.
+- **Type in motion:** wrap each word in an `overflow: hidden` mask and move it in by `yPercent`, so it appears through its own line instead of fading in on the page. Animate per letter only for display sizes.
 - **Masks and reveals:** `clip-path: inset()/circle()`, or SVG masks. MorphSVGPlugin (`gsap/MorphSVGPlugin.js`) morphs between shapes, for example a sheet into a logo petal. With SVG children, set `svgOrigin` once with `gsap.set` and never inside a `fromTo` (it drifts).
 - **3D:** CSS 3D for cards, sheets and windows (cheap). Three.js for real geometry, such as surfaces, particles and models. Create the renderer with `preserveDrawingBuffer: true` and render inside `onFrame`.
 - **Real UI:** recorded footage as `<video>` (see Footage). A screenshot only for a deliberate still beat. Crop by translating inside an `overflow:hidden` box; never push past the recorded pixels.
 - **Light:** a radial-gradient glow layer, a vignette (`post.vignette`), and gradient shading on surfaces that turn.
-- **Grain and motion blur:** set in `F.post`. `blur: 4` renders 4 subframes per frame across `shutter` (0.5 is a 180° shutter).
+- **Grain and motion blur:** set in `F.post`. `blur: n` renders n subframes per frame across `shutter` (0.5 is a 180° shutter). Few subframes don't blur, they stack copies: a camera move with `blur: 3` shows every label three times. At 60 fps leave blur off; use `blur: 8` or more only for genuinely fast moves (whip pans, things flying at the lens), and check a still mid-move.
 
 ## Rendering
 
@@ -136,12 +139,13 @@ node engine/render.mjs films/<name>                    # final: out/<name>.mp4 +
   --audit               only check type placement
 ```
 
-Output: H.264 High at CRF 18, BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, arc, post), runs `tools/score.py` while frames render, then muxes and runs the critic.
+Output: H.264 High at CRF 16 with `aq-mode=3` (keeps paper, gradients and grain from banding), BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, arc, post), runs `tools/score.py` while frames render, then muxes and runs the critic.
 
 Speed: each subframe is a full browser paint. Heavy filters (many blurred layers) and WebGL on a CPU-only machine are the slow parts. Draft first, then render the final once.
 
 ## Debugging
 
+- A flash (one frame unlike its neighbours) or a stutter: the critic finds both (`No flashes`, `Smooth motion`). A flash in footage means a clip played by seeking; check the renderer logged `footage <clip>: N frames`.
 - A blank or black frame: something threw. The renderer prints `page error:` lines, so check the console in preview.
 - Elements in the wrong place only when rendering: they depend on wall time or a callback. Move the logic into `tl` or `onFrame`.
 - Fonts missing in frames: `@font-face` paths are relative to `film.css`. `F.ready()` waits for `document.fonts`.

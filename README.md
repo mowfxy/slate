@@ -6,7 +6,7 @@
 
 **Original launch films, written as code.**
 
-Claude skills plus a frame-accurate browser film engine. Give Slate a product, and it finds an idea in the product itself, records real footage of the product in use, writes the film as a web page, renders it with motion blur and grain, scores it from the edit, and checks timing, type placement, loudness and originality before you watch it.
+Claude skills plus a frame-accurate browser film engine. Give Slate a product, and it finds an idea in the product itself, records real footage of the product in use, writes the film as a web page, renders it at 60 fps with a camera that frames what matters, sets it to real music fitted to the cut, and checks timing, type placement, loudness and originality before you watch it.
 
 [Watch the Dayline ad](docs/media/dayline-in-place.mp4) · [Watch the Slate film](docs/media/slate-take-one.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [The film engine](skills/film-engine/SKILL.md)
 
@@ -16,17 +16,18 @@ Claude skills plus a frame-accurate browser film engine. Give Slate a product, a
 
 ## The example: Dayline, "In place"
 
-A 27-second ad for Dayline, a day planner that places your list into your day. Dayline was built for this film as a working web app, and every product shot is the real app recorded in use: placing a day, dragging one thing to the afternoon while the rest make room, and opening the week.
+A 27-second ad for Dayline, a day planner that places your list into your day. Dayline was built for this film as a working web app, and every product shot is the real app recorded in use at 60 fps: placing a day, dragging one thing to the afternoon while the rest make room, and opening the week.
 
-<a href="docs/media/dayline-in-place.mp4"><img src="docs/media/dayline-frames.jpg" alt="Eight frames from the ad: the line 'Nine things. One day.' on warm paper, tasks flying into the timeline, the planned day, the line 'Plans change.', the day after a block is moved, the week filling in, and the Dayline wordmark with its orange dot over 'Your day, in place.'"></a>
+<a href="docs/media/dayline-in-place.mp4"><img src="docs/media/dayline-frames.jpg" alt="Eight frames from the ad: the line 'Nine things. One day.' on warm paper, a close-up of the Place my day button just pressed, the planned day, the line 'Plans change.', a close-up of a block being dragged, the day after the rest made room, the week filling in, and the Dayline wordmark with its orange dot over 'Your day, in place.'"></a>
 
 | | |
 |---|---|
 | **The idea** | Dayline gives each thing its place in the day. So the film is one gesture: something lands in its slot, on the beat. |
-| **The move** | *The landing.* A short drop that settles with a small overshoot, at every scale: tasks land in the timeline an eighth note apart, words land on the cards, the week lands a sixteenth at a time, and the name lands last, then its dot. |
+| **The move** | *The landing.* Fast in, a long soft stop, on the beat, at every scale: tasks land in the timeline an eighth note apart, words drop into their lines on the cards, the week lands a sixteenth at a time, and the name lands last, then its dot (the one thing with a little weight). |
+| **The camera** | Close on the app, so it reads: on *Place my day* as the pointer reaches it, pulling back as the day fills; on the block being dragged, following it down to the afternoon; easing out to the whole week as it fills. The footage is recorded at 2.5× so the close-ups stay sharp. |
 | **The form** | *A groove.* One steady pocket at 92 BPM. Cards and shots change on the bar; the cuts are paper to paper, so the film reads as one surface. No build to a drop, no speed-up, no stop. |
-| **The sound** | A produced groove in F, played on sampled instruments: warm pad, electric piano, an 808 kick and sub, claps on two and four, hats. Every landing is a vibraphone note, so as the day fills the picture plays a rising run. It rings out under the name. Measured against the references: 35% of the energy below 60 Hz (they range 10–60%), −14 LUFS. |
-| **Rejected** | Letters typed out on white with one coloured word, a prompt box with a pull-back, app windows in a dark void: all reference moves. And a solo piano with room tone, which is thin and quiet next to produced launch music. |
+| **The sound** | Written as a brief for a real track (Lyria, through [`tools/music.py`](tools/music.py)): a warm, unhurried groove at 92 with Rhodes, a round sub and a relaxed kit, settling under the name. Landings are soft paper taps, not notes. **This render still carries Slate's own sketch score**, which isn't good enough; it will be replaced by a generated track once a Gemini key is set. |
+| **Rejected** | Letters typed out on white with one coloured word, a prompt box with a pull-back, app windows in a dark void: all reference moves. The whole app window at 1×, which is unreadable at film size. Bouncy overshoot on every word and a shot that jumps up at each cut. A vibraphone note on every landing, which made the score a toy. |
 
 Source: [`films/dayline-ad/`](films/dayline-ad), with the app in [`app/`](films/dayline-ad/app). The app takes `?bpm=` so its animations land on the film's grid.
 
@@ -43,7 +44,7 @@ A 45-second launch film for Slate, made with Slate. Every shot is real, recorded
 | **The form** | *The take.* One unhurried pass. The shots get longer toward the end, not shorter: no montage, no stop before the name. The sticks clap hard once, at the start, like a real slate, then close softly; at the end they close slowly over the last shot, the way a tail slate ends a take. |
 | **The footage** | Recorded, not mocked up: the code is typed into a real editor page, the render and critic are real runs played back from their logs, the studio and its waveform are the real preview. All captured with `engine/record.mjs`. |
 | **The layout** | One axis. Lines of type sit on the seam in the middle of the frame, on their own black card, never over footage. Labels sit in the bottom bar, in the same slot every time. The layout check passes every word. |
-| **The sound** | No music for the first half: one clap, then the footage's own keys and clicks, and the room. A solo piano arrives on the line "Every sound, on its frame", plays freely, and rings under the name. |
+| **The sound** | No music for the first half: one clap, then the footage's own keys and clicks, and the room. Then a sketch solo piano, which is too thin: it is due to be replaced by a generated track, like Dayline's. |
 | **Rejected** | A prompt typed into a box while the camera pulls back, a wall of generated films, screens floating in space: all reference moves. A hairline with a serif line above it, too close to a reference's horizon shot. And the film's own first cut: bright plucks building into a half-beat montage, a dead stop, then the name. That is the trailer habit, and it made Slate sound like every launch. |
 
 Source: [`films/slate-launch/`](films/slate-launch). The film is one HTML page, one stylesheet and one script. The footage is recorded by the shot scripts in [`shots/`](films/slate-launch/shots).
@@ -57,8 +58,8 @@ flowchart LR
     G --> C[Style frames<br><sub>stills first</sub>]
     C --> R[Footage<br><sub>recorded product, CLI runs,<br>filmed or generated video</sub>]
     R --> D[Film page<br><sub>HTML · CSS · GSAP · Three.js</sub>]
-    D --> E[Renderer<br><sub>Chromium, frame by frame,<br>motion blur, grain</sub>]
-    D --> F[score.py<br><sub>arc + cues → music + foley,<br>−14 LUFS</sub>]
+    D --> E[Renderer<br><sub>Chromium, frame by frame,<br>60 fps, exact footage frames</sub>]
+    D --> F[music.py + score.py<br><sub>Lyria track fitted to the grid,<br>foley on cues, −14 LUFS</sub>]
     E --> H[MP4]
     F --> H
     H --> I{Critic<br><sub>sync · reading · layout · loudness ·<br>originality · rubric</sub>}
@@ -66,13 +67,13 @@ flowchart LR
     I -- pass --> J[Deliver]
 ```
 
-**A film is a web page.** Each film is written new for its idea: CSS 3D, SVG, canvas, WebGL, real web fonts, blend modes and filters, animated on one paused [GSAP](https://gsap.com) timeline. The renderer seeks that timeline to the exact time of every frame and captures it in headless Chromium. It renders four subframes per frame for motion blur and encodes with ffmpeg. Nothing depends on the wall clock, so every frame renders the same way twice.
+**A film is a web page.** Each film is written new for its idea: CSS 3D, SVG, canvas, WebGL, real web fonts, blend modes and filters, animated on one paused [GSAP](https://gsap.com) timeline. The renderer seeks that timeline to the exact time of every frame and captures it in headless Chromium. Footage never plays through a `<video>` seek, which in Chromium can paint a stale frame or flash the clip's first frame: the renderer extracts every clip's frames and draws the exact one for each film frame. Films render at 60 fps and encode with ffmpeg. Nothing depends on the wall clock, so every frame renders the same way twice.
 
 **Footage is real.** Product shots are recordings of the product in use, not screenshots sliding around. See [Real footage](#real-footage).
 
 **There are no templates.** Slate's first version shipped ready-made scenes modeled on its reference films, and every film it made became a remix of them. Slate now gives Claude primitives and principles: camera, depth, landing and type helpers, a taste guide that explains *why* great launch films work, and a list of the references' signature moves that are off-limits.
 
-**One manifest drives picture and sound.** Scenes, the score's dynamics and every sound cue (a landing, a click, a page flip) are declared in the film. The score is composed from them, so sounds land on the frame.
+**One manifest drives picture and sound.** Scenes, the energy arc and every sound cue (a landing, a click, a page flip) are declared in the film. The music brief is written from them (a timed outline, tempo, key, length), the track is fitted to the film's beat grid, and the foley lands on the frame.
 
 **Taste in pace and sound, not one formula.** Each film picks a form (the take, call and response, settle, slow reveal, loop, or, rarely, the trailer) and a sound that fits the product. The score is produced the way launch music is: four styles played on sampled instruments (a groove, plucks over a sub, a cinematic section, a bright band) with a real low end, balanced to what the reference films measure, plus quieter sketch styles and no music at all. There are five endings: ring, phrase, button, fade and cut. The critic warns when a film falls into the trailer habit without choosing it. See [Form and sound](#form-and-sound).
 
@@ -84,7 +85,7 @@ A launch film is moving pictures, so Slate records them. A shot script drives a 
 // films/<name>/shots/compose.mjs  →  node engine/record.mjs films/<name>/shots/compose.mjs
 export default {
   url: 'https://app.example.com/new',     // the product itself, or a page on the Slate server
-  width: 1920, height: 800, scale: 1.25,  // the picture's aspect, recorded big enough to push in
+  width: 1920, height: 800, scale: 2.5, fps: 60,  // the picture's aspect, 60 fps, big enough for close-ups
   async run(rec) {
     await rec.cursor(1400, 600);
     await rec.click('#new');              // glides there, clicks for real
@@ -147,11 +148,23 @@ A launch film doesn't have to build, speed up, go silent and slam the logo. Slat
 | Loop | Even, last frame flows into the first | A repeating figure | The beginning |
 | Trailer | Builds, accelerates, stops dead | Builds, silence, a hit | A slam and the logo |
 
-Launch music is produced: recorded instruments, a real low end, mastered loud. The four default styles are played on sampled instruments and balanced to what the reference films measure.
+Launch music is produced: recorded instruments, a real low end, mastered loud. Slate can't compose that: it can't hear, and every score it wrote note by note and played on General MIDI samples sounded synthetic next to the references. So the music for a finished film is a real track, either one you supply or one generated by Google's Lyria from a brief Slate writes from the film itself:
+
+```bash
+node engine/render.mjs films/dayline-ad --audit           # writes the manifest
+python3 tools/music.py prompt films/dayline-ad            # read the brief: notes, tempo, key, a timed outline of the cut
+GEMINI_API_KEY=… python3 tools/music.py generate films/dayline-ad --takes 3
+# → music/take-1..3.mp3; the first is stretched to the film's tempo, its downbeat put on beat 0,
+#   trimmed and faded after the resolve. Then F.music({track: 'music/track.wav'}) and render.
+```
+
+Listen to the takes and pick one; `music.py fit` fits any of them, or a track of your own.
+
+The built-in score below is a sketch for drafts and timing checks. The critic warns when a film is about to ship with it. Its four produced styles are played on sampled instruments and balanced to what the reference films measure.
 
 | Score style | Sound | For |
 |---|---|---|
-| `groove` | Warm pad, electric piano, 808 kick and sub, claps; landings on vibraphone | Everyday apps, ads with a pocket |
+| `groove` | Warm pad, electric piano, 808 kick and sub, claps | Everyday apps, ads with a pocket |
 | `pluck` | Harp and celesta arpeggios over a sub drone and strings | Teasers, reveals |
 | `cinema` | Strings, choir, horns, pulsing celli, deep drums | Brand films, stories |
 | `bright` | Strings, piano eighths, bass, a full kit | Optimistic launches |
@@ -204,7 +217,7 @@ The **launch-video** skill directs it. It studies the product, pitches three con
 | [`launch-video`](skills/launch-video/SKILL.md) | The director: product → three concepts → style frames → film → render → critique → deliver |
 | [`video-taste`](skills/video-taste/SKILL.md) | Principles for idea, form, pacing, type, image and sound, plus the do-not-copy list |
 | [`film-engine`](skills/film-engine/SKILL.md) | The runtime API, primitives (camera, depth, landing, masks, 3D, WebGL) and render options |
-| [`sound-design`](skills/sound-design/SKILL.md) | Choosing the sound, produced and sketch score styles, reference band targets, five endings, foley cues, supplied tracks, mastering |
+| [`sound-design`](skills/sound-design/SKILL.md) | Real music (supplied, or Lyria from the film's brief) fitted to the cut, foley cues, reference band targets, endings, the sketch score, mastering |
 | [`video-critic`](skills/video-critic/SKILL.md) | Automated checks, including originality, plus an 8-line taste rubric |
 | [`reference-study`](skills/reference-study/SKILL.md) | Learn principles from videos you like and fingerprint them so renders never copy them |
 
@@ -212,46 +225,51 @@ The **launch-video** skill directs it. It studies the product, pitches three con
 
 ```js
 import {film} from 'slate';
-const F = film({fps: 30, width: 1920, height: 1080, bpm: 100});
+const F = film({fps: 60, width: 1920, height: 1080, bpm: 100});
 const {tl, b} = F;                                   // one paused timeline; b(n) = seconds at beat n
 
 const code = await F.footage('code');                // footage/code.webm + its sidecar: marks, key presses
 const v = document.querySelector('[data-scene="code"] video');
 v.dataset.at = b(6); v.dataset.from = code.marks.typed - 3;   // which part of the clip plays when
-F.scene('code', {start: b(6), end: b(16), kind: 'product'}, (sub) => {
-  sub.fromTo(v, {scale: 1}, {scale: 1.04, duration: b(8), ease: 'none'});   // a slow push
-});
+F.scene('code', {start: b(6), end: b(16), kind: 'product'});
+F.camera(v, [                                         // close on the line being typed, then out to the file
+  {t: b(6), x: 520, y: 300, zoom: 2.2},
+  {t: b(12), x: 960, y: 540, zoom: 1.2, ease: 'power3.inOut'},
+], {of: code});                                       // x/y in the recorded page's pixels, so clip.rects work
 F.cueClip(code, b(6), {from: code.marks.typed - 3});  // the clip's own key presses, on the right frames
 F.cue('clap', b(2));                                  // the sticks clap once, to start the take
-F.notes({form: 'The take: unhurried, shots lengthen toward the end', sound: 'The room, then a solo piano'});
-F.music({key: 'D', style: 'solo', end: 'ring', arc: [[0, 0], [b(40), 0.3], [b(54), 0.55], [b(66), 0.3]]});
-F.post({grain: 5, vignette: 0.3, blur: 4});
+F.notes({form: 'The take: unhurried, shots lengthen toward the end', sound: 'Felt piano and a low string pad…'});   // the music brief
+F.music({key: 'D', track: 'music/track.wav', arc: [[0, 0], [b(40), 0.3], [b(54), 0.55], [b(66), 0.3]]});
+F.post({grain: 5, vignette: 0.3});
 F.end(b(75));
 await F.ready();
 ```
 
 ## The critic
 
-Every render ends with a report measured from the file itself, plus a contact sheet for Claude to score. This is the report on the example film. Its last shot shows the same check running on the render before this one, including the two new form checks.
+Every render ends with a report measured from the file itself, plus a contact sheet for Claude to score. This is the report on the Dayline ad.
 
 ```
-**PASS** · 16 passed, 1 warning, 0 failed
-1920×1080 · 30 fps · 45.00s · 100 BPM · median shot 5.70s
+**PASS** · 19 passed, 2 warnings, 0 failed
+1920×1080 · 60 fps · 26.73s · 92 BPM
 
-✅  Cuts on the beat               5/5 detected cuts within a frame of the ¼-beat grid (100%)
-✅  The ending lands               0 cuts in the final 15%
-✅  Form is chosen                 form: The take. Even and unhurried, slowing at the end…
-✅  Not the trailer habit          shots 4.8s early, 9.5s before the logo; no stop before the logo
-✅  Logo holds                     logo on screen 4.20s (≥ 2.5s)
+✅  Form is chosen                 form: A groove. One steady pocket, cards and shots on the bar…
+✅  Not the trailer habit          no stop before the logo
+✅  Logo holds                     logo on screen 3.91s (≥ 2.5s)
 ✅  Every line is readable         all words held long enough
 ✅  No black frames                none
 ✅  Nothing sits frozen            motion everywhere it should be
-✅  Loudness on target             -14.1 LUFS integrated (target -14.0), LRA 12.1 LU
-✅  Peaks are safe                 peak -1.0 dBFS (≤ −0.5)
-✅  Original (not a reference)     0/52 frames close to a reference (0.0%)
+✅  No flashes                     no frame breaks from its neighbours
+✅  Smooth motion                  no repeated frames inside motion
+✅  Loudness on target             -14.2 LUFS integrated (target -14.0)
+✅  Has a low end                  35% below 60 Hz (references: 10–60% sub)
+✅  Original (not a reference)     0/53 frames close to a reference (0.0%)
 ✅  Type placement                 every word in title-safe, off pictures and off other words
-⚠️  Planned cuts are visible       2/6: cuts between two dark frames are too soft for the detector
+⚠️  Real music                     generated sketch score (groove): for delivery use a supplied or Lyria track
+⚠️  Planned cuts are visible       0/5: paper-to-paper cuts are too soft for the detector
 ```
+
+**No flashes** and **Smooth motion** were added after an audit of the earlier renders: they find a frame unlike both its neighbours, and a repeated frame inside motion. On the previous Dayline render they found the footage flashing back to its first frame at 6.70s, where the second of four parallel renderers started with a fresh video seek. The new render also caught, while it was being built, a clip showing in the wrong scene ("Nothing sits frozen") and subframes left blank. Each one is now covered by a test.
 
 The originality check compares frames against fingerprints of the reference films: layout hashes and color histograms, never the footage itself. On Slate's first launch film, which rebuilt reference shots, it flags 29% of the frames.
 
@@ -261,7 +279,7 @@ The originality check compares frames against fingerprints of the reference film
 engine/      runtime (slate.js) and studio, renderer, recorder (record.mjs), termcast, footage tools, players, tests
 films/       one folder per film: index.html, film.css, film.js, assets/, shots/ (shot scripts), footage/ (clips)
 skills/      six Claude skills (the plugin)
-tools/       score.py, arrange.py + sampler.py (sampled score), critic.py, originality.py, analyze_reference.py, beatgrid.py
+tools/       music.py (Lyria track, fitted to the cut), score.py + arrange.py + sampler.py (foley, sketch score, mastering), critic.py, originality.py, analyze_reference.py, beatgrid.py
 docs/media/  README media
 ```
 

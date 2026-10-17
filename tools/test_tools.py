@@ -108,3 +108,56 @@ class OriginalityTest(unittest.TestCase):
             refs = json.loads(json.dumps(refs))  # as stored on disk
             self.assertGreater(originality.check(same, refs)['share'], 0.5)
             self.assertEqual(originality.check(other, refs)['share'], 0.0)
+
+
+class MusicTest(unittest.TestCase):
+    """tools/music.py: the brief, reading a Lyria response, and fitting a take to the film's grid."""
+
+    def setUp(self):
+        import music
+        self.music = music
+        self.dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(self.dir, 'build'))
+        self.man = {**TL, 'bpm': 120, 'duration': 6.0, 'notes': {'form': 'A groove in one gear.', 'sound': 'Warm keys and a sub.'},
+                    'music': {'key': 'D', 'track': 'music/track.wav', 'arc': [[0, 0.3], [4, 0.8], [6, 0.2]]}}
+        with open(os.path.join(self.dir, "build", "manifest.json"), "w") as f:
+            json.dump(self.man, f)
+
+    def test_brief_follows_the_film(self):
+        text = self.music.brief(self.man)
+        self.assertIn('120 BPM', text)
+        self.assertIn('No vocals', text)
+        self.assertIn('Warm keys and a sub.', text)
+        self.assertIn("[0:00 - 0:04]", text)
+        self.assertIn('resolves on a final chord', text)  # the resolve cue at 5s
+
+    def test_reads_audio_from_steps_and_legacy_outputs(self):
+        import base64
+        enc = base64.b64encode(b'ID3abc').decode()
+        self.assertEqual(self.music.audio_of({'steps': [{'type': 'model_output', 'content': [{'type': 'text', 'text': 'x'}, {'type': 'audio', 'data': enc, 'mime_type': 'audio/mpeg'}]}]}), (b'ID3abc', 'audio/mpeg'))
+        self.assertEqual(self.music.audio_of({'outputs': [{'type': 'audio', 'data': enc}]})[0], b'ID3abc')
+        self.assertEqual(self.music.audio_of({'steps': []}), (None, None))
+
+    def test_fit_stretches_to_tempo_and_trims(self):
+        from scipy.io import wavfile
+        # a click track at 116 BPM that starts half a beat late: fit must bring it to 120 and to length
+        sr, bpm = 48000, 116.0
+        x = np.zeros(int(10 * sr))
+        for k in range(18):
+            i = int((0.26 + k * 60 / bpm) * sr)
+            x[i:i + 600] += np.sin(np.arange(600) / 600 * np.pi) * (1.0 if k % 4 == 0 else 0.5) * np.sin(np.arange(600) * 0.3)
+        os.makedirs(os.path.join(self.dir, 'music'))
+        wavfile.write(os.path.join(self.dir, 'music', 'take-1.wav'), sr, (x * 20000).astype(np.int16))
+        try:
+            import librosa  # noqa: F401
+        except ImportError:
+            self.skipTest('needs librosa')
+        out = self.music.fit(self.dir, 'music/take-1.wav')
+        r, y = wavfile.read(out)
+        self.assertEqual(len(y), int(6.0 * 48000))
+        meta = json.load(open(os.path.join(self.dir, 'music', 'track.json')))
+        self.assertAlmostEqual(meta['stretch'], 120 / meta['tempo'], places=3)
+        self.assertLess(abs(meta['tempo'] - bpm), 3)
+        # the scorer picks the fitted track up from the manifest
+        res = subprocess.run([sys.executable, os.path.join(HERE, 'score.py'), os.path.join(self.dir, 'build', 'manifest.json'), '--out', os.path.join(self.dir, 'build')], capture_output=True, text=True)
+        self.assertEqual(res.returncode, 0, res.stderr)

@@ -3,10 +3,10 @@
   "url": "/films/dayline-ad/app/index.html?bpm=92&state=placed",
   "width": 1920,
   "height": 1080,
-  "scale": 1.5,
-  "fps": 30,
-  "frames": 198,
-  "duration": 6.6,
+  "scale": 2.5,
+  "fps": 60,
+  "frames": 393,
+  "duration": 6.55,
   "marks": {
     "start": 0,
     "click": 1
@@ -17,5 +17,18 @@
       "t": 1
     }
   ],
-  "rects": {}
+  "rects": {
+    "week": {
+      "x": 1513.84375,
+      "y": 113.5,
+      "width": 79.078125,
+      "height": 36
+    },
+    "grid": {
+      "x": 590,
+      "y": 174,
+      "width": 1170,
+      "height": 816
+    }
+  }
 }

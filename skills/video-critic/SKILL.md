@@ -30,6 +30,9 @@ It measures the rendered file, not the plan:
 | Short lines (warn) | > 9 words in one `type` scene |
 | No black frames | any black gap mid-film |
 | Nothing sits frozen (warn) | ≥ 2.5s without motion outside titles and logos |
+| No flashes | No frame unlike both neighbours while they agree (a stale or wrong frame: a clip that seeked badly, a blank subframe) |
+| Smooth motion | At most 2 repeated frames inside motion (6+ fails): dropped updates read as stutter |
+| Real music (warn) | The film uses a real track (`F.music({track})`, see `sound-design`), not the sketch score |
 | Loudness, peaks | outside ±1 LU of target, peak above −0.5 dBFS |
 | Sound resolves (warn) | the last 0.25s is louder than −30 dBFS |
 | Type placement | any visible word outside title-safe (6%), cut off by the frame, over a picture (img, video, canvas) without `data-over`, on top of other words, or under 18px. From the renderer's layout audit (`build/layout.json`, sampled 6× a second) |
