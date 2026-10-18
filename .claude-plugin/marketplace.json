@@ -1,13 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "slate",
   "owner": {
-    "name": "mowfxy"
+    "name": "mowfxy",
+    "url": "https://github.com/mowfxy"
   },
+  "description": "Launch films and motion design from code, directed by Claude.",
   "plugins": [
     {
       "name": "slate",
       "source": "./",
-      "description": "Launch films with taste: director with a concept stage, taste guide, film engine, sound design, critic and reference study skills."
+      "description": "A director, a taste guide, two film engines (Slate HTML/GSAP and cinetic Remotion/HyperFrames), sound design, a critic and reference study, in seven skills."
     }
   ]
 }

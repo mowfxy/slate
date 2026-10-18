@@ -36,6 +36,8 @@ import argparse
 import json
 import os
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 import subprocess
 
 import numpy as np
@@ -909,7 +911,7 @@ def main():
     ap.add_argument('--offset', type=float, default=0.0, help='seconds to skip into --music so its downbeat lands at 0')
     ap.add_argument('--lufs', type=float, default=-14.0)
     a = ap.parse_args()
-    man = json.load(open(a.manifest))
+    man = json.load(open(a.manifest, encoding='utf-8'))
     os.makedirs(a.out, exist_ok=True)
     # a fitted track named by the film (tools/music.py writes music/track.wav) wins over the generated score
     track = (man.get('music') or {}).get('track')

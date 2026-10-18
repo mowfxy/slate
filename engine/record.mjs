@@ -26,7 +26,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {chromium} from 'playwright-core';
-import {serve} from './serve.mjs';
+import {serve, siteFor} from './serve.mjs';
 import {findChrome} from './browser.mjs';
 
 const CURSOR = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="32" viewBox="0 0 26 32"><path d="M2 2 L2 25 L8 19.5 L12.2 29 L16.4 27.2 L12.3 18 L20.5 18 Z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
@@ -41,7 +41,7 @@ export async function record(shotFile, {out, draft = false, log = console.log} =
   out = out || path.join(path.dirname(path.dirname(path.resolve(shotFile))), 'footage', path.basename(shotFile).replace(/\.m?js$/, '.webm'));
   fs.mkdirSync(path.dirname(out), {recursive: true});
 
-  const {server, url: base} = await serve();
+  const {server, url: base} = await serve(0, siteFor(path.dirname(path.dirname(path.resolve(shotFile)))));
   const browser = await chromium.launch({executablePath: findChrome(), args: ['--font-render-hinting=none', '--disable-lcd-text', '--force-color-profile=srgb', '--hide-scrollbars', '--enable-unsafe-swiftshader', '--disable-media-suspend', '--disable-background-media-suspend', '--autoplay-policy=no-user-gesture-required']});
   const ctx = await browser.newContext({viewport: {width, height}, deviceScaleFactor: scale});
   const page = await ctx.newPage();

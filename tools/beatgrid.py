@@ -9,6 +9,8 @@ usage: beatgrid.py track.mp3 [--json beats.json]
 import argparse
 import json
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 
 import numpy as np
 
@@ -35,7 +37,7 @@ def main():
     print(f"tempo {bpm} BPM · {len(beats)} beats · first downbeat at {offset:.3f}s · {len(y) / sr:.1f}s long")
     print(f"use film({{bpm: {bpm}}}) and render with: --music {a.track} --offset {offset:.3f}")
     if a.json:
-        json.dump({'bpm': bpm, 'offset': offset, 'beats': beats.tolist()}, open(a.json, 'w'), indent=2)
+        json.dump({'bpm': bpm, 'offset': offset, 'beats': beats.tolist()}, open(a.json, 'w', encoding='utf-8'), indent=2)
 
 
 if __name__ == '__main__':

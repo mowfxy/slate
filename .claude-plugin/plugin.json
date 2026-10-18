@@ -1,18 +1,14 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "slate",
-  "version": "0.3.0",
-  "description": "Original launch films, feature announcements, teasers and ads with taste: concepts drawn from the product, the product live in the film and rendered frame by frame at 60 fps, an electronic score composed for each cut, and a critic that checks sync, readability, loudness and originality.",
+  "displayName": "Slate",
+  "version": "1.0.0",
+  "description": "Launch films, feature announcements, ads, teasers, loops, logo stings and UI walkthroughs from code, directed by Claude: ideas drawn from the product and a 273-technique library, the product live in the film, two engines (Slate's HTML/GSAP renderer, or cinetic's Remotion and HyperFrames), a composed score, 60 fps motion blur, and a critic, pixel forensics and originality check before delivery.",
   "author": {
-    "name": "mowfxy"
+    "name": "mowfxy",
+    "url": "https://github.com/mowfxy"
   },
   "homepage": "https://github.com/mowfxy/slate",
   "repository": "https://github.com/mowfxy/slate",
-  "keywords": [
-    "video",
-    "launch",
-    "marketing",
-    "motion-design",
-    "gsap",
-    "ffmpeg"
-  ]
+  "keywords": ["video", "launch-video", "motion-design", "gsap", "remotion", "hyperframes", "ffmpeg", "sound-design", "animation"]
 }

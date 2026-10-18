@@ -10,7 +10,7 @@ Taste grows from examples, but a film that copies its examples has no taste. Whe
 ## 1. Measure
 
 ```bash
-python3 tools/analyze_reference.py ref1.mp4 ref2.mp4 --out references/<project>
+python3 ${CLAUDE_PLUGIN_ROOT}/tools/analyze_reference.py ref1.mp4 ref2.mp4 --out references/<project>
 ```
 
 For each video this writes `analysis.md` (format, cuts, shot rhythm, loudness, energy per second, tempo, cuts on musical onsets), `analysis.json` and a timestamped `sheet.jpg`, plus a `summary.md` table across all of them. Tempo needs librosa.
@@ -43,10 +43,10 @@ Then write a short `references/<project>/style.md` that the director reads along
 Fingerprint the references so the critic flags renders that come too close:
 
 ```bash
-python3 tools/originality.py fingerprint ref1.mp4 ref2.mp4 --names client-ref-1 client-ref-2 --out skills/video-critic/references/fingerprints.json
+python3 ${CLAUDE_PLUGIN_ROOT}/tools/originality.py fingerprint ref1.mp4 ref2.mp4 --names client-ref-1 client-ref-2 --out references/fingerprints.json
 ```
 
-Add each film's signature moves to `skills/video-taste/references/do-not-copy.md`.
+This writes to the project, not the plugin, so a plugin update never wipes it; the critic reads it from there automatically (or list more files in `SLATE_REFS`). Add each film's signature moves to the project's `references/style.md` under "Do not copy"; the director reads it next to `video-taste/references/do-not-copy.md`. Contribute a move to the plugin's own list only when it is true of every film, not just this project.
 
 ## 5. Rights
 

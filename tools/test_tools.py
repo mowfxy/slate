@@ -66,7 +66,7 @@ class ScoreTest(unittest.TestCase):
     def test_mix_is_mastered(self):
         with tempfile.TemporaryDirectory() as d:
             p = os.path.join(d, 'manifest.json')
-            json.dump(TL, open(p, 'w'))
+            json.dump(TL, open(p, 'w', encoding='utf-8'))
             subprocess.run([sys.executable, os.path.join(HERE, 'score.py'), p, '--out', d], check=True, capture_output=True)
             err = subprocess.run(['ffmpeg', '-hide_banner', '-i', os.path.join(d, 'mix.wav'), '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
             lufs = float(err[err.rfind('I:'):].split()[1])
@@ -78,13 +78,13 @@ class CriticTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             build = os.path.join(d, 'build')
             os.makedirs(build)
-            json.dump(TL, open(os.path.join(build, 'manifest.json'), 'w'))
+            json.dump(TL, open(os.path.join(build, 'manifest.json'), 'w', encoding='utf-8'))
             vid = os.path.join(d, 'v.mp4')
             subprocess.run(['ffmpeg', '-v', 'error', '-f', 'lavfi', '-i', 'testsrc2=s=320x180:r=30:d=6', '-f', 'lavfi', '-i', 'sine=f=220:d=6',
                             '-shortest', '-pix_fmt', 'yuv420p', vid], check=True)
             r = subprocess.run([sys.executable, os.path.join(HERE, 'critic.py'), vid, '--manifest', os.path.join(build, 'manifest.json'), '--out', os.path.join(d, 'c')],
                                capture_output=True, text=True)
-            report = json.load(open(os.path.join(d, 'c', 'report.json')))
+            report = json.load(open(os.path.join(d, 'c', 'report.json'), encoding='utf-8'))
             names = {c['check'] for c in report['checks']}
             self.assertIn('Loudness on target', names)
             self.assertIn('Original (not a reference)', names)
@@ -120,7 +120,7 @@ class MusicTest(unittest.TestCase):
         os.makedirs(os.path.join(self.dir, 'build'))
         self.man = {**TL, 'bpm': 120, 'duration': 6.0, 'notes': {'form': 'A groove in one gear.', 'sound': 'Warm keys and a sub.'},
                     'music': {'key': 'D', 'track': 'music/track.wav', 'arc': [[0, 0.3], [4, 0.8], [6, 0.2]]}}
-        with open(os.path.join(self.dir, "build", "manifest.json"), "w") as f:
+        with open(os.path.join(self.dir, "build", "manifest.json"), "w", encoding='utf-8') as f:
             json.dump(self.man, f)
 
     def test_brief_follows_the_film(self):
@@ -155,7 +155,7 @@ class MusicTest(unittest.TestCase):
         out = self.music.fit(self.dir, 'music/take-1.wav')
         r, y = wavfile.read(out)
         self.assertEqual(len(y), int(6.0 * 48000))
-        meta = json.load(open(os.path.join(self.dir, 'music', 'track.json')))
+        meta = json.load(open(os.path.join(self.dir, 'music', 'track.json'), encoding='utf-8'))
         self.assertAlmostEqual(meta['stretch'], 120 / meta['tempo'], places=3)
         self.assertLess(abs(meta['tempo'] - bpm), 3)
         # the scorer picks the fitted track up from the manifest

@@ -6,7 +6,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
-import {ROOT} from './serve.mjs';
 
 const args = process.argv.slice(2);
 const dash = args.indexOf('--');
@@ -18,13 +17,13 @@ const cols = parseInt(opt('cols', '96'), 10);
 
 const t0 = performance.now();
 const events = [];
-const child = spawn(cmd[0], cmd.slice(1), {cwd: ROOT, env: {...process.env, COLUMNS: String(cols), FORCE_COLOR: '0'}});
+const child = spawn(cmd[0], cmd.slice(1), {cwd: process.cwd(), env: {...process.env, COLUMNS: String(cols), FORCE_COLOR: '0'}});
 const take = (stream) => (d) => { const s = d.toString(); events.push([+((performance.now() - t0) / 1000).toFixed(3), s]); stream.write(s); };
 child.stdout.on('data', take(process.stdout));
 child.stderr.on('data', take(process.stderr));
 child.on('close', (code) => {
   fs.mkdirSync(path.dirname(out), {recursive: true});
-  fs.writeFileSync(out, JSON.stringify({command: cmd.join(' ').replace(ROOT + '/', ''), cols, code, duration: (performance.now() - t0) / 1000, events}, null, 1));
+  fs.writeFileSync(out, JSON.stringify({command: cmd.join(' ').replace(process.cwd() + path.sep, ''), cols, code, duration: (performance.now() - t0) / 1000, events}, null, 1));
   console.log(`\n▸ cast -> ${path.relative(process.cwd(), out)} (${events.length} chunks, ${((performance.now() - t0) / 1000).toFixed(1)}s, exit ${code})`);
   process.exit(code ?? 1);
 });

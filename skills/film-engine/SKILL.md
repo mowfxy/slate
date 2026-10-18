@@ -9,6 +9,13 @@ A film is a web page in `films/<name>/`. Anything a browser can draw can go in a
 
 There are no scene templates on purpose. Every film's scenes are written new for its idea, using the primitives below.
 
+## Where things live
+
+- **Slate** is the plugin root, `${CLAUDE_PLUGIN_ROOT}`: the engine, runtime, tools and the Dayline example. Install once with `cd ${CLAUDE_PLUGIN_ROOT}/engine && npm install` and `python3 -m pip install -r ${CLAUDE_PLUGIN_ROOT}/requirements.txt`.
+- **Films** live in the person's project, `films/<name>/`. Run the commands from the project root: the server serves the project at `/` and Slate's engine at `/engine/`, so the import map below works from any project (`SLATE_SITE` overrides the served folder). Renders go to the project's `out/`.
+- **Python:** the renderer uses `$PYTHON`, then the active virtualenv, then `python3`/`python`, keeping the first that imports numpy, and runs it in UTF-8 mode. A film's `score.py` can `from synth import Song` directly: the renderer puts Slate's `tools/` on `PYTHONPATH` (and in `SLATE_TOOLS`).
+- **QA from cinetic** runs on any render: `forensics.py`, `probe.py`, `sheet.py` and `deliver.sh` in `${CLAUDE_PLUGIN_ROOT}/skills/cinetic/scripts/` (see `launch-video` §7).
+
 ## Files
 
 ```
@@ -16,7 +23,7 @@ films/<name>/index.html   the stage and one <section data-scene="..."> per scene
 films/<name>/film.css     the look
 films/<name>/film.js      the timeline (an ES module)
 films/<name>/assets/      fonts (with their license), logo, stills
-films/<name>/shots/       shot scripts that record the film's footage (engine/record.mjs)
+films/<name>/shots/       shot scripts that record the film's footage (${CLAUDE_PLUGIN_ROOT}/engine/record.mjs)
 films/<name>/footage/     recorded or prepared clips: <shot>.webm + <shot>.json sidecar
 ```
 
@@ -65,7 +72,7 @@ await F.ready();
 
 Determinism rules:
 - Everything time-based goes on `tl` or in `onFrame(t)`. CSS animations are fine, because the renderer seeks them too.
-- `<video data-at="12.5" data-from="3" data-rate="1">` plays clip time 3s at film time 12.5s. In a render the video is never seeked: the renderer extracts every clip's frames to `build/frames/<clip>/` and the element shows the exact frame for each film frame as its background (seeking a `<video>` per frame painted stale frames, and flashed the clip's first frame at the start of every parallel chunk). The element keeps its layout and anything animating it. The studio preview still plays the video. Clips must be VP9 WebM (headless Chromium has no H.264); `engine/record.mjs` writes it, `engine/footage.mjs prepare` converts anything else.
+- `<video data-at="12.5" data-from="3" data-rate="1">` plays clip time 3s at film time 12.5s. In a render the video is never seeked: the renderer extracts every clip's frames to `build/frames/<clip>/` and the element shows the exact frame for each film frame as its background (seeking a `<video>` per frame painted stale frames, and flashed the clip's first frame at the start of every parallel chunk). The element keeps its layout and anything animating it. The studio preview still plays the video. Clips must be VP9 WebM (headless Chromium has no H.264); `${CLAUDE_PLUGIN_ROOT}/engine/record.mjs` writes it, `${CLAUDE_PLUGIN_ROOT}/engine/footage.mjs prepare` converts anything else.
 - **Frame rate.** Render at 60 fps (`film({fps: 60})`) and record footage at the same rate. At 30 fps, camera moves and scrolling judder; the reference product films are all 60.
 - Nothing may depend on the wall clock, on load order, or on `Math.random()`.
 
@@ -85,11 +92,11 @@ Films are made of shots, not slides. Get real footage first, then write the film
 
 | Source | Tool | For |
 |---|---|---|
-| The product's web UI, in use | `node engine/record.mjs films/<name>/shots/<shot>.mjs` | demos: typing, clicking, scrolling, things updating |
-| A command-line session | `node engine/termcast.mjs --out shots/x.cast.json -- <command>`, then film `engine/players/terminal.html?cast=...` | CLIs, dev tools, builds |
-| Source code | film `engine/players/code.html?file=...` | developer products |
-| Filmed video (phone, camera, stock you have a license for) | `node engine/footage.mjs prepare clip.mp4 --out footage/clip.webm` | people, places, hardware |
-| Generated video | `GEMINI_API_KEY=... node engine/footage.mjs generate "<prompt>" --out footage/x.webm` | atmosphere and texture, never the product's UI |
+| The product's web UI, in use | `node ${CLAUDE_PLUGIN_ROOT}/engine/record.mjs films/<name>/shots/<shot>.mjs` | demos: typing, clicking, scrolling, things updating |
+| A command-line session | `node ${CLAUDE_PLUGIN_ROOT}/engine/termcast.mjs --out shots/x.cast.json -- <command>`, then film `${CLAUDE_PLUGIN_ROOT}/engine/players/terminal.html?cast=...` | CLIs, dev tools, builds |
+| Source code | film `${CLAUDE_PLUGIN_ROOT}/engine/players/code.html?file=...` | developer products |
+| Filmed video (phone, camera, stock you have a license for) | `node ${CLAUDE_PLUGIN_ROOT}/engine/footage.mjs prepare clip.mp4 --out footage/clip.webm` | people, places, hardware |
+| Generated video | `GEMINI_API_KEY=... node ${CLAUDE_PLUGIN_ROOT}/engine/footage.mjs generate "<prompt>" --out footage/x.webm` | atmosphere and texture, never the product's UI |
 
 A shot script drives a real page in Chromium on a virtual clock and captures every frame, so the clip is smooth at full frame rate on any machine, with a drawn cursor (screenshots have none):
 
@@ -116,13 +123,13 @@ Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920
 
 ## The studio
 
-`node engine/serve.mjs` and open `http://localhost:4173/films/<name>/`. The film plays above its timeline: scenes in lanes, every cue as a tick, and once a render has written `build/mix.wav`, the score's waveform and sound. Click or drag to scrub, space to play, arrows step a frame. `?t=12` starts there, `?paused`, `?zoom=5` follows the playhead at 5× (to read cues), `?ui=1.5` scales the labels, `?panel=400` makes the timeline taller. `?preview` forces the studio on in automated browsers (that's how it gets filmed).
+`node ${CLAUDE_PLUGIN_ROOT}/engine/serve.mjs` and open `http://localhost:4173/films/<name>/`. The film plays above its timeline: scenes in lanes, every cue as a tick, and once a render has written `build/mix.wav`, the score's waveform and sound. Click or drag to scrub, space to play, arrows step a frame. `?t=12` starts there, `?paused`, `?zoom=5` follows the playhead at 5× (to read cues), `?ui=1.5` scales the labels, `?panel=400` makes the timeline taller. `?preview` forces the studio on in automated browsers (that's how it gets filmed).
 
 ## Layout
 
 `F.audit()` checks every visible word (opacity over 0.15) in the current frame: inside title-safe (6% margins), not cut off, not over an `img`/`video`/`canvas`, not over other words, at least 18px. Clip paths are respected. Mark exceptions in the HTML: `data-over` (words that may sit on a picture you darkened for them), `data-audit="off"` (a duplicate copy of words, or labels inside a mock UI), `data-small` (deliberately tiny print).
 
-`node engine/render.mjs films/<name> --audit` samples the film 6× a second and prints each problem with its time range. Full renders run it first and the critic reports it.
+`node ${CLAUDE_PLUGIN_ROOT}/engine/render.mjs films/<name> --audit` samples the film 6× a second and prints each problem with its time range. Full renders run it first and the critic reports it.
 
 ## Primitives (write them per film; these are the patterns)
 
@@ -140,17 +147,17 @@ Record at the aspect of the picture area you will show (a 2.4:1 matte wants 1920
 ## Rendering
 
 ```bash
-node engine/serve.mjs                                  # preview at http://localhost:4173/films/<name>/
-node engine/render.mjs films/<name> --stills 1,8.5,20  # PNGs in build/stills
-node engine/render.mjs films/<name> --draft            # half size, no blur, fast
-node engine/render.mjs films/<name>                    # final: out/<name>.mp4 + score + critic
+node ${CLAUDE_PLUGIN_ROOT}/engine/serve.mjs                                  # preview at http://localhost:4173/films/<name>/
+node ${CLAUDE_PLUGIN_ROOT}/engine/render.mjs films/<name> --stills 1,8.5,20  # PNGs in build/stills
+node ${CLAUDE_PLUGIN_ROOT}/engine/render.mjs films/<name> --draft            # half size, no blur, fast
+node ${CLAUDE_PLUGIN_ROOT}/engine/render.mjs films/<name>                    # final: out/<name>.mp4 + score + critic
   --from 10 --to 18     render a range
   --workers 4           parallel pages (default: CPU count)
   --music track.wav     a supplied track instead of the generated score
   --audit               only check type placement
 ```
 
-Output: H.264 High at CRF 16 with `aq-mode=3` (keeps paper, gradients and grain from banding), BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, notes, post), runs the film's `score.py` (or the sketch scorer `tools/score.py` if it has none) while frames render, then muxes and runs the critic.
+Output: H.264 High at CRF 16 with `aq-mode=3` (keeps paper, gradients and grain from banding), BT.709, AAC 256k, `+faststart`. The renderer writes `build/manifest.json` (scenes, cues, notes, post), runs the film's `score.py` (or the sketch scorer `${CLAUDE_PLUGIN_ROOT}/tools/score.py` if it has none) while frames render, then muxes and runs the critic.
 
 Speed: on 4 cores a 29s 60 fps film with blur on a third of its frames renders in about 5 minutes. Each subframe is a full browser paint. Heavy filters (many blurred layers) and WebGL on a CPU-only machine are the slow parts. Draft first, then render the final once.
 

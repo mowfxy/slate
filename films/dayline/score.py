@@ -16,8 +16,10 @@ import argparse
 import json
 import os
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../tools'))
+sys.path.insert(0, os.environ.get('SLATE_TOOLS') or os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../tools'))
 from synth import Song  # noqa: E402
 
 ap = argparse.ArgumentParser()
@@ -26,7 +28,7 @@ ap.add_argument('--out', default='build')
 ap.add_argument('--lufs', type=float, default=-14.0)
 ap.add_argument('--stems', action='store_true')
 a, _ = ap.parse_known_args()
-man = json.load(open(a.manifest))
+man = json.load(open(a.manifest, encoding='utf-8'))
 BPM = man['bpm']
 BEATS = man['duration'] / (60 / BPM)
 

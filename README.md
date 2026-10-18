@@ -6,7 +6,9 @@
 
 **Launch films, ads and feature announcements, written as code.**
 
-Claude skills plus a frame-accurate film engine. Slate finds the idea in the product, builds the product live inside the film so the camera can go as close as it likes, composes a score for the cut, renders at 60 fps with real motion blur, and checks timing, type, loudness and originality before anyone watches it.
+Claude skills plus two film engines. Slate finds the idea in the product, draws its moves from a 273-technique library instead of reaching for the usual ones, builds the product live inside the film so the camera can go as close as it likes, composes a score for the cut, renders at 60 fps with real motion blur, and checks timing, type, pixels, loudness and originality before anyone watches it.
+
+It now includes [cinetic](https://github.com/Leonxlnx/cinetic) (MIT, by Leonxlnx) as its second engine: Remotion or HyperFrames for logo stings with alpha, seamless landing-page loops, captioned walkthroughs, social re-layouts and full brand kits. Its technique library, generated-look bans, pixel forensics and delivery scripts run on every film, whichever engine made it.
 
 [Watch the Dayline film](docs/media/dayline.mp4) · [The taste guide](skills/video-taste/SKILL.md) · [The film engine](skills/film-engine/SKILL.md) · [Sound](skills/sound-design/SKILL.md)
 
@@ -89,7 +91,7 @@ s.master('mix.wav', lufs=-14, levels={'kick': -15, 'pad': -23, 'pluck': -19, 'ha
 
 `levels` sets each instrument's loudness while it plays, so the balance is decided by numbers, not by ear. `--stems` writes every bus to its own file.
 
-You can also use a track you supply (`--music track.wav --offset <downbeat>`), or a generated one from Google's Lyria through [`tools/music.py`](tools/music.py), which writes the brief from the film and fits the take to its beat grid. Lyria needs `GEMINI_API_KEY`, which isn't set in this setup yet.
+You can also use a track you supply (`--music track.wav --offset <downbeat>`), or a generated one from Google's Lyria through [`tools/music.py`](tools/music.py), which writes the brief from the film and fits the take to its beat grid. Lyria needs a `GEMINI_API_KEY` with Lyria access.
 
 ## Layout that holds
 
@@ -135,7 +137,7 @@ node engine/render.mjs films/dayline                    # → out/dayline.mp4, s
 node engine/serve.mjs                                   # the studio at localhost:4173/films/dayline/
 ```
 
-You need Node 20+, Python 3.10+, ffmpeg and a Chromium. Slate finds Playwright's browser cache on its own, or set `SLATE_CHROME`. The full Dayline render takes about six minutes on 4 cores, most of it in the motion-blurred frames.
+You need Node 20+, Python 3.10+, ffmpeg and a Chromium (`cd engine && npx playwright-core install chromium-headless-shell`). Slate finds Playwright's browser cache on its own, or set `SLATE_CHROME`. It runs on Windows, macOS and Linux; on Windows set `PYTHON` if `python3` is not the interpreter with the packages (the renderer otherwise picks the first one that imports numpy). Films can live in any project: run the commands from its root and output goes to its `out/`. The cinetic engine adds Node 22+, bash (Git Bash or WSL on Windows) and the packages in [docs/cinetic-setup.md](docs/cinetic-setup.md). The full Dayline render takes about six minutes on 4 cores, most of it in the motion-blurred frames.
 
 ## Use it with Claude
 
@@ -148,15 +150,16 @@ Slate is a Claude Code plugin:
 
 > Make a 30 second ad for our new offline mode. 16:9, here's the repo: https://…
 
-The **launch-video** skill directs it. It studies the product, pitches three concepts and rejects any that copy a reference or would fit any brand, builds style frames, rebuilds the product live in the film, composes the score, renders, critiques and fixes until the film passes.
+The **launch-video** skill directs it. It studies the product, pitches three concepts through different lenses and rejects any that copy a reference, would fit any brand or undersell the product, draws the film's techniques, picks the engine, builds style frames, rebuilds the product live in the film, composes the score, renders, measures, critiques and fixes until the film passes the ship gate.
 
 | Skill | What it does |
 |---|---|
-| [`launch-video`](skills/launch-video/SKILL.md) | The director: product → three concepts → style frames → film → score → render → critique → deliver |
-| [`video-taste`](skills/video-taste/SKILL.md) | Principles for idea, form, pacing, type, image and sound, plus the do-not-copy list |
+| [`launch-video`](skills/launch-video/SKILL.md) | The director: intake → three concepts → technique draw → engine → brand and style frames → film → score → render → measure and critique → deliver |
+| [`video-taste`](skills/video-taste/SKILL.md) | The house bans, then principles for idea, form, pacing, copy fragments, type, layout, image and sound, plus the do-not-copy list |
+| [`cinetic`](skills/cinetic/SKILL.md) | The Remotion and HyperFrames engines: starters, 273 techniques, the lint, earshot sound kit, motion blur, forensics, A/V audit, delivery and brand kit ([vendored](skills/cinetic/VENDORED) from cinetic 1.1.0) |
 | [`film-engine`](skills/film-engine/SKILL.md) | The runtime API: live product, camera, blur, masks, landing, 3D, and render options |
 | [`sound-design`](skills/sound-design/SKILL.md) | Composing on synth.py, mixing by numbers, foley cues, supplied or Lyria tracks, endings, mastering |
-| [`video-critic`](skills/video-critic/SKILL.md) | Automated checks, including originality, plus an 8-line taste rubric |
+| [`video-critic`](skills/video-critic/SKILL.md) | Automated checks, including originality and cinetic's pixel forensics, plus an 8-line taste rubric and the ship gate |
 | [`reference-study`](skills/reference-study/SKILL.md) | Learn principles from videos you like and fingerprint them so renders never copy them |
 
 ## A film, briefly
@@ -187,16 +190,20 @@ await F.ready();
 ```
 engine/      runtime (slate.js) and studio, renderer, recorder, termcast, footage tools, players, tests
 films/       one folder per film: index.html, film.css, film.js, score.py, assets/
-skills/      six Claude skills (the plugin)
+skills/      seven Claude skills (the plugin); skills/cinetic is vendored from cinetic by tools/sync_cinetic.py
 tools/       synth.py (the instruments and the mix), critic.py, originality.py, music.py (Lyria, or your own track),
              score.py + arrange.py + sampler.py (foley and the older sketch scores), analyze_reference.py, beatgrid.py
-docs/media/  README media
+docs/        README media, cinetic's setup guide, evaluation and changelog
+evals/       cinetic's evaluation briefs and expectations
 ```
 
-Tests: `node --test engine/test/*.test.mjs` and `python3 -m unittest tools/test_tools.py`.
+Tests: `node --test engine/test/*.test.mjs` and `python3 -m unittest tools/test_tools.py` for Slate; `node skills/cinetic/scripts/test/lint-film.test.mjs`, `python3 skills/cinetic/scripts/test/pick.test.py` and the rest of `skills/cinetic/scripts/test/` for cinetic.
+
+To update cinetic: bring the fork up to date (`git -C ../cinetic fetch upstream && git -C ../cinetic merge upstream/main`), then `python3 tools/sync_cinetic.py ../cinetic` and run its tests.
 
 ## Notes
 
 - Built on [GSAP](https://gsap.com) (free for commercial use), [Playwright](https://playwright.dev) (Apache 2.0), [Three.js](https://threejs.org) (MIT) and ffmpeg. The score uses numpy, scipy, numba and pyloudnorm. There's no per-seat render license.
 - The example film uses Mowafy Serif and Sans under the SIL Open Font License ([`films/dayline/assets/fonts/Mowafy-OFL.txt`](films/dayline/assets/fonts/Mowafy-OFL.txt)).
+- `skills/cinetic` is [cinetic](https://github.com/Leonxlnx/cinetic) by Leonxlnx, under the MIT License ([`skills/cinetic/LICENSE.txt`](skills/cinetic/LICENSE.txt)), vendored through the fork [mowfxy/cinetic](https://github.com/mowfxy/cinetic). Its Remotion engine has its own licence: free for individuals and companies of up to 3 people.
 - Dayline is a product made up for this example. Use footage, music and logos you have the rights to. The reference films that shaped the taste guide are described and fingerprinted, never included.
