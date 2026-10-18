@@ -1,89 +1,117 @@
 ---
 name: launch-video
-description: Direct a launch film, feature announcement, teaser, ad or changelog clip for a product - from reading the product, through three original concepts and style frames, to a rendered, scored and critic-passed MP4. Use when someone asks for a product video, launch film, promo, ad or announcement video.
+description: Direct any product video made from code - launch film, feature announcement, teaser, ad, product demo, landing-page loop, logo sting, UI walkthrough, social cut or changelog clip - from reading the product, through three original concepts, a drawn technique plan and style frames, to a rendered, scored, measured and critic-passed MP4. Use whenever someone asks for a video, promo, ad, animation, motion graphic or animated demo of a product, even if they only say "make a video about X" or "animate this feature". Chooses between the Slate engine (HTML/GSAP, the product rebuilt live) and the cinetic engines (Remotion or HyperFrames).
 ---
 
-# Direct a launch film
+# Direct a product film
 
-You are the director. The output is a finished MP4 that passed the critic, the film's source in `films/<name>/`, and two sentences on the idea. Work in this order. Most of the quality is decided before any rendering.
+You are the director. The output is a finished MP4 that passed the gates, the film's source, and two sentences on the idea. Most of the quality is decided before any rendering.
 
-Setup (once): `cd engine && npm install`, then `python3 -m pip install -r requirements.txt`. You need Node 20+, Python 3.10+, ffmpeg and a Chromium (found automatically from Playwright's cache, or set `SLATE_CHROME`).
+This plugin holds two proven toolkits. Use the best of both: the idea and the QA always come from both, the engine from one.
+
+- **Slate** (this plugin's root, `${CLAUDE_PLUGIN_ROOT}`): a film is an HTML page on one paused GSAP timeline, the product rebuilt live in it, rendered frame by frame at 60 fps with declared motion blur, scored on `tools/synth.py`, judged by `tools/critic.py` with an originality check. Skills: `film-engine`, `sound-design`, `video-critic`, `reference-study`, `video-taste`.
+- **cinetic** (`${CLAUDE_PLUGIN_ROOT}/skills/cinetic`): Remotion (React) or HyperFrames (HTML/GSAP) from a starter, a 273-entry technique library, a lint for generated-look tells, one `timeline.ts` beat grid with fragment-chain copy, the earshot sound kit, optical-flow motion blur, pixel forensics, an A/V audit, delivery (alpha, GIF, WebM, social re-layouts) and a brand kit. Skill: `cinetic`.
+
+Below, `$S` means `${CLAUDE_PLUGIN_ROOT}` and `$C` means `${CLAUDE_PLUGIN_ROOT}/skills/cinetic`. Films live in the person's project (`films/<name>/`), never inside the plugin.
+
+## 0. Intake → `BRIEF.md`
+
+- If the brief states the product, the message and the length, infer the rest and write the assumptions down. Otherwise ask at most three questions: the product in one line, the format and length, where it will be shown.
+- If no assets were given, ask for the product's site or repo instead of inventing a UI.
+- Pick the format row (`video-taste` §9, or `$C/references/formats.md`), the pace (calm by default, crisp only when the brief asks for energy), and the engine (below).
+- Write a spec line, for example `1920x1080@60, 30s, 100BPM, pace: calm, engine: slate, sound: composed`, then the house bans (`video-taste` §0) with any brand-supplied exceptions. Critics are prompted with this file word for word.
+
+### Choosing the engine
+
+| Use | When |
+|---|---|
+| **Slate** (default) | A product with a UI you can rebuild or embed (web apps, sites, dashboards, dev tools); one continuous take with the camera doing the editing; a composed electronic score; a film that must be checked against reference films. Runs natively on Windows, macOS and Linux with Node, Python and ffmpeg; no render licence |
+| **cinetic, Remotion** | A logo sting with ProRes 4444 alpha versions; a seamless landing-page loop with GIF and WebM; a UI walkthrough with SRT captions; 9:16 and 1:1 re-layouts from one timeline; the person's React components to reuse; an existing Remotion project; an invented brand that needs a full brand kit. Needs bash (on Windows: Git Bash or WSL) and Node 22+. Remotion needs a company licence from 4 people |
+| **cinetic, HyperFrames** | An existing HyperFrames project, or `--batch` renders driven by variables |
+
+Say which engine and why in one line of `BRIEF.md`. Then load that engine's skill (`film-engine` or `cinetic`) when you reach the build.
+
+Setup, once per machine: `cd $S/engine && npm install` and `python3 -m pip install -r $S/requirements.txt` for Slate (Node 20+, Python 3.10+, ffmpeg, a Chromium: `npx playwright-core install chromium-headless-shell`, or set `SLATE_CHROME`); `$S/docs/cinetic-setup.md` for cinetic. On Windows, if `python3` is not the interpreter with the packages, set `PYTHON` to it.
 
 ## 1. Study the product
 
-Load `video-taste` first. Then read everything you can about the product: the site, the README, the app itself, its brand kit. Write down:
-- **The promise** in the product's own words (tagline, hero line).
-- **Its material:** the nouns of its UI, the shape of its logo, its fonts, colors, and the feeling of using it.
+Load `video-taste` first. Read everything you can: the site, the README, the app itself, the brand kit. Write down:
+- **The promise** in the product's own words, and what the name means or evokes.
+- **The smart part:** finish "unlike the obvious version, it…". The film shows that, not a feature tour.
+- **Its material:** the nouns of its UI, its logo's shape, fonts, colours, the feeling of using it.
 - **The tension it resolves** for its user.
-- **Real assets** you can use: screenshots (capture fresh ones at 2x if you can run it), fonts with their license, logo SVG, product photos.
+- **Real assets:** screenshots (fresh, at 2x if you can run it), fonts with their licence, logo SVG, photos.
 
-If the person gave no assets, ask for the product's site or repo instead of inventing a UI.
+## 2. Three concepts, gated
 
-## 2. Pitch three concepts
+Write three, each through a different lens: (a) the product's own verb or metaphor made literal, (b) the viewer's pain made visible, (c) a formal device (a relay object, a bookend, one unbroken camera move, a container that becomes the product). Each states:
+- **Idea** in one sentence (logline ≤ 15 words), and **why only this product**.
+- **The device:** the one object that travels through every shot (ideally resolving into the mark), and **the move** repeated at every scale.
+- **Form and pace curve** (`video-taste` §3), **first frame, last frame and last second**.
+- **Sound:** what the product itself sounds like, the ensemble or kit and why, the ending.
 
-Write three different concepts, each in this form:
-- **Idea:** one sentence, the product's promise made visible.
-- **Why only this product:** the material it is made from.
-- **The move:** the one motion repeated at every scale.
-- **Form:** the take, call and response, settle, slow reveal, loop or trailer (`video-taste` §3), and the pace curve.
-- **First frame / last frame, and the last second** (what is seen and heard as it ends).
-- **Sound:** what the product itself sounds like, the ensemble and why, the ending.
+Make them differ in form and sound, not only imagery. Then gate them, writing each rejection reason:
+1. Its central image or main transition is on `video-taste/references/do-not-copy.md` (or the project's `references/style.md`), or the same move in new clothes.
+2. It still works with a competitor's logo at the end.
+3. **Specificity:** it would be just as true of a simpler product. **Deletion:** remove the demo beats and the value still reads; remove the value beats and it should stop working, or it was a feature tour. **Feature word:** muted, a stranger would use the brief's word for the feature.
+4. The trailer form by habit, unless the occasion is a loud launch and you can say why calmer forms would undersell it.
 
-Make the three concepts differ in form and sound too, not only in imagery.
+Pick the strongest survivor. If the person is around, show them the three; otherwise pick and keep going.
 
-Then gate them:
-1. Reject any concept whose central image or main transition is on `video-taste/references/do-not-copy.md`, or is the same move in different clothes. Write the rejection reason.
-2. Reject any concept that would still work with a competitor's logo at the end.
-3. Reject the trailer form (accelerating cuts, a stop, the logo slam) unless the occasion is a loud launch and you can say why calmer forms would undersell it.
-4. Pick the strongest one left and say why. If the person is around, show them the three; otherwise pick and keep going.
+## 3. Draw the techniques; don't choose them
 
-Store the decision with `F.notes({idea, motif, form, sound, rejected})` so it travels with the film.
-
-## 3. Style frames before motion
-
-Build the film's look as still frames first: the opening, the peak, a product moment and the ending. Write the HTML and CSS for those scenes, then:
+Left to choose, every film converges on the same fade-up, push-in and end card. Draw instead, whatever the engine:
 
 ```bash
-node engine/render.mjs films/<name> --stills 1,9,22,48
+python3 $C/scripts/pick.py --format <launch|feature|loop|sting|walkthrough|vertical> --energy <calm|medium|high> --seconds <len> --json out/qa/picks.json
 ```
 
-Look at every PNG in `films/<name>/build/stills/`. Judge it against the image bar in `video-taste` (real assets, light, depth, material, one focal point, brand type). Fix and repeat until the stills look like frames from a film you'd want to watch. They are cheap, and renders are not.
+Build the picks the concept can carry, retold in its own objects. The recipes are written for cinetic's `timeline.ts`; on Slate translate frames to `F.b()` beats and eases to GSAP (`$C/references/motion-tokens.md` lists the beziers, which GSAP takes as `CustomEase` or the nearest `power`/`expo`). Reroll a pick that fights the concept at most twice (`--category <cat> --exclude <id>`) or drop it with a written reason; never add a move the draw didn't give you. Pass `--brand-supplied <look>` when the brand owns a banned look. Read one entry in full with `pick.py --show <id>`.
 
-## 4. Put the product in the film
+Write the treatment: on cinetic, `assets/TREATMENT.md`; on Slate, `F.notes({idea, motif, form, sound, rejected, picks})` plus a beat sheet (bar | time | picture | copy fragment | sound) at the top of `film.js`. Copy is planned as fragment chains (`video-taste` §5).
 
-The proof is the product moving. The default is to put it *in* the film page, live (load `film-engine`, section Live product):
-- **A web product or one you can rebuild faithfully:** build its real UI in the film page (`films/<name>/index.html`, inside a `[data-ui]` world under `F.camera`), with real-looking sample data, and drive it from the timeline: the pointer's path, the press, what lands, moves and reflows. Its state is a function of time (`F.onFrame`), so every frame renders the same twice. The camera can sit at 3× on one control and stay sharp.
-- **Something you can't rebuild** (another company's site, a long real session): record it with `engine/record.mjs` at `scale` ≥ your closest zoom. **A CLI or build:** record the real run with `engine/termcast.mjs`.
-- **People, places, objects:** filmed video the person gives you (`engine/footage.mjs prepare`), or Veo atmosphere if `GEMINI_API_KEY` is set. Never generate the product's UI.
+## 4. Brand and style frames
 
-If there's no way to show something real, say so; don't fake it with a sliding screenshot.
+- **Supplied brand:** it wins. Its fonts, colours, voice and any banned look are used as given and recorded in `BRIEF.md`.
+- **Invented brand:** follow cinetic Step 2 (`$C/references/brand-and-color.md`): three personality adjectives drive the typeface, stage, accent and motion character; `python3 $C/scripts/palette.py --accent '#…' --stage dark|light` builds the neutrals and refuses a banned hue; sketch 6–10 mark directions on one sheet, run the 64 px misread test, set the lockup like a typographer.
+- Build the opening, the peak, a product moment and the ending as stills before any motion. Slate: `node $S/engine/render.mjs films/<name> --stills 1,9,22,48`. cinetic: `npx remotion still`. Judge them against `video-taste` §7. They are cheap; renders are not.
 
-## 5. Write the film
+## 5. Put the product in the film
 
-A film is a web page: `films/<name>/index.html` plus its CSS and JS, written new for this film. Load `film-engine` for the contract and the primitives. Write every scene yourself, for this idea. Never start from another film's code. The one exception is small utilities you've already written (a word-landing helper, for example).
+The proof is the product moving. Default: **live in the film** (Slate `film-engine` › Live product; cinetic `references/product-ui.md`): its real UI rebuilt in the page, fed by one data module whose numbers agree with the story in every frame, driven by the timeline, so the camera can sit at 3× on one control and stay sharp. Record only what you can't rebuild (`$S/engine/record.mjs`, `termcast.mjs`). Filmed or licensed footage for people and places. Never generate the product's UI, and never fake a demo with a sliding screenshot; if nothing real can be shown, say so.
 
-- Time everything in beats (`F.b(n)`), with the tempo chosen for the film's energy.
-- Declare each scene with what must be readable (`words`) and its `kind`.
-- Put every word on the grid you chose (see `video-taste`, Layout), then run `node engine/render.mjs films/<name> --audit` and fix every line it prints.
-- Place sound cues on the frames where things happen (`F.cue('land', t)`), then compose the score for this cut in `films/<name>/score.py` on `tools/synth.py` (load `sound-design`), and mark it with `F.music({key, composed: 'films/<name>/score.py'})`.
-- Preview in a browser with `node engine/serve.mjs`, then open `http://localhost:4173/films/<name>/`, where you can scrub with the arrow keys.
+## 6. Build, sound, render
 
-## 6. Render, critique, fix
+Load the engine skill and follow it: Slate → `film-engine`, then `sound-design`; cinetic → `cinetic` Steps 3–6 (`timeline.ts`, acts, `export-cues.ts`, the earshot kit, `render.sh`). Either way:
+- Time everything in beats. Sounds sit on the frame of the visible cause (contact, 50% of a pop, a whoosh's apex), computed from the picture code, never retyped.
+- Every word on the film's grid; run the layout gate (Slate `render.mjs --audit`; cinetic `layout-audit.sh` and `grid-check.ts`) and fix every line it prints.
+- Iterate on drafts and previews. Render the motion-blurred master once, after the last review round.
+
+## 7. Measure and critique, whatever the engine
+
+The QA from both toolkits runs on any MP4, so every film gets all of it:
 
 ```bash
-node engine/render.mjs films/<name>            # full quality: motion blur where declared, the film's score, critic
-node engine/render.mjs films/<name> --draft    # half size, no blur: for checking timing
+python3 $C/scripts/probe.py out/<name>.mp4 --spec 1920x1080@60 --dur <s>                      # size, fps, duration, BT.709, AAC
+python3 $C/scripts/forensics.py out/<name>.mp4 [--cues out/cues.json] --json out/qa/forensics.json  # pops, stalls, ghosts, judder, banding, loop seam
+python3 $C/scripts/sheet.py out/<name>.mp4 --chunks 4 --rate 12 --out out/qa/sheet.png           # contact sheets
+python3 $S/tools/originality.py check out/<name>.mp4 --refs $S/skills/video-critic/references/fingerprints.json   # not a copy of a reference
 ```
 
-Load `video-critic`. The critic measures the file and runs the originality check. Then look at `build/critic/contact.jpg` and score it with the rubric. Fix the lowest score first, and change one or two things per round. Usually 2–3 rounds; stop after 4 and say what is still weak.
+Slate films also get `tools/critic.py` automatically at the end of a render (sync to the beat grid, reading time, layout, loudness, originality, rubric sheet). cinetic films also get `av-audit.py` against their cues. Then load `video-critic` and score the sheet with its rubric; for a launch film or walkthrough also run cinetic's director and art/copy/UI lenses (`$C/assets/critics/`). Fix the lowest score first, one or two changes per round. Launch films get at least 2 rounds; stop after 5 and say what is still weak.
 
-## 7. Deliver
+**Ship gate:** no failing script; no open P0 (visible on the hook, payoff or logo, or breaking the story); every rubric line ≥ 3, Finish and Sync at 5.
 
-Hand over the MP4 in `out/`, a poster frame (`ffmpeg -ss <t> -i out/<name>.mp4 -frames:v 1 poster.png`), the critic report, and two sentences: the idea, and what you'd change with more time. For other aspect ratios, change `width`/`height` in `film()`, re-check stills (layouts must be redesigned, not cropped), and render again.
+## 8. Deliver
+
+- The MP4 and a poster from a clean still (Slate: `render.mjs --stills <t>`; cinetic: the last frame), the QA reports in `out/deliver/qa/`, and two sentences: the idea, and what you'd change with more time.
+- Loops, GIF and WebM from any master: `bash $C/scripts/deliver.sh out/<name>.mp4 --loop --gif --webm --poster-from <still.png>`. Alpha stings and social re-layouts need the cinetic Remotion path (`--alpha`, `--variants`); on Slate, change `width`/`height` in `film()`, redesign the layout (never crop) and render again.
+- An invented brand ships its kit (`bash $C/scripts/brand-kit.sh`, Remotion projects).
+- Tell the person plainly that the sound was checked by measurement and that they should listen.
 
 ## Rules
 
-- Never invent capabilities, metrics, quotes or customers for a real product. Sample data in the UI must look like sample data.
-- Never use another company's logo, footage, music or copy. Reference films are for learning principles only.
-- The brand wins: its fonts, colors and voice override any default here.
-- Never use `Math.random()` or wall-clock time in a film. Every frame must render the same way twice (use `seeded()`).
+- Never invent capabilities, metrics, quotes or customers for a real product. Sample data must look like sample data.
+- Never use another company's logo, footage, music or copy. References teach principles only.
+- The brand wins over every default in this plugin.
+- Every frame must render the same way twice: no `Math.random()`, wall-clock time or CSS transitions that the engine doesn't seek.

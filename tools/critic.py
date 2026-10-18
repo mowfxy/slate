@@ -13,6 +13,8 @@ import argparse
 import json
 import os
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 
 import numpy as np
 
@@ -21,7 +23,22 @@ import vidlib as V  # noqa: E402
 
 HOLD_OK = {'type', 'logo'}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_REFS = os.path.join(ROOT, 'skills/video-critic/references/fingerprints.json')
+BUNDLED_REFS = os.path.join(ROOT, 'skills/video-critic/references/fingerprints.json')
+
+
+def default_refs():
+    """The bundled reference films, plus your own: $SLATE_REFS (paths joined by os.pathsep) and the project's
+    references/fingerprints.json, where reference-study writes them so a plugin update never wipes them."""
+    extra = [p for p in os.environ.get('SLATE_REFS', '').split(os.pathsep) if p]
+    return [BUNDLED_REFS, *extra, os.path.join(os.getcwd(), 'references', 'fingerprints.json')]
+
+
+def load_refs(paths):
+    refs = {}
+    for p in dict.fromkeys(os.path.abspath(p) for p in paths):
+        if os.path.exists(p):
+            refs.update(json.load(open(p, encoding='utf-8')))
+    return refs
 import originality  # noqa: E402
 
 
@@ -33,12 +50,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('video')
     ap.add_argument('--manifest', required=True)
-    ap.add_argument('--refs', default=DEFAULT_REFS, help='reference fingerprints (originality.py fingerprint)')
+    ap.add_argument('--refs', action='append', help='reference fingerprints (originality.py fingerprint); repeatable. '
+                    'Default: the bundled set, $SLATE_REFS and ./references/fingerprints.json')
     ap.add_argument('--out', default='critic')
     ap.add_argument('--lufs', type=float, default=-14.0)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
-    tl = json.load(open(a.manifest))
+    tl = json.load(open(a.manifest, encoding='utf-8'))
     info = V.probe(a.video)
     fps = info['fps']
     frame = 1 / fps
@@ -95,7 +113,10 @@ def main():
     logos = [s for s in tl['scenes'] if s['kind'] == 'logo']
     if logos:
         hold = logos[-1]['end'] - logos[-1]['start']
-        check(R, 'Logo holds', hold >= 2.5, f"logo on screen {hold:.2f}s (≥ 2.5s)")
+        # 2-5s, and alive past 2.5s (a creep or a push): cinetic measured a static card past ~2.5s as a drag
+        check(R, 'Logo holds', hold >= 2.0, f"logo on screen {hold:.2f}s (≥ 2.0s)")
+        if hold > 5.0:
+            check(R, 'End card is not a drag', False, f"logo on screen {hold:.2f}s; past 5s cut it shorter; past 2.5s keep it building (a creep or push) or cut it", 'warn')
 
     # 4. Every scene with words is on screen long enough to read them: words/3.5 + 0.6s, at least 1.2s.
     slow = []
@@ -155,8 +176,9 @@ def main():
         curve = []
 
     # 7. Originality: no stretch of the film may look like a reference film.
-    if a.refs and os.path.exists(a.refs):
-        o = originality.check(a.video, json.load(open(a.refs)))
+    refs = load_refs(a.refs or default_refs())
+    if refs:
+        o = originality.check(a.video, refs)
         # near-copies someone looked at and judged a coincidence: F.notes({reviewed: [{from, to, ref, why}]}).
         # They're listed in the report, not failed; the reason has to be written down, and it's visible to anyone reading it.
         rev = [r for r in (notes.get('reviewed') or []) if r.get('why')]
@@ -176,7 +198,7 @@ def main():
     # 8. Layout: the renderer's audit of where every visible word sat (engine/render.mjs writes layout.json).
     lay = os.path.join(os.path.dirname(a.manifest), 'layout.json')
     if os.path.exists(lay):
-        issues = json.load(open(lay))
+        issues = json.load(open(lay, encoding='utf-8'))
         check(R, 'Type placement', not issues,
               '; '.join(f"{i['what']} {i['kind']} at {i['from']}–{i['to']}s" for i in issues[:4]) + (f" (+{len(issues) - 4} more)" if len(issues) > 4 else '')
               if issues else 'every word in title-safe, off pictures and off other words')
@@ -201,8 +223,8 @@ def main():
         lines += [f"{i * max(0.5, dur / 40):6.1f}s {c:6.1f} {V.bar(c - lo, max(curve) - lo or 1)}" for i, c in enumerate(curve)]
     lines += ['```', '', f"![contact sheet]({os.path.basename(sheet)})", '',
               'Now look at contact.jpg yourself and score it with the rubric in skills/video-critic.']
-    open(os.path.join(a.out, 'report.md'), 'w').write('\n'.join(lines) + '\n')
-    json.dump({'video': a.video, 'pass': not fails, 'checks': R, 'cuts': detected, 'loudness_curve': curve}, open(os.path.join(a.out, 'report.json'), 'w'), indent=2)
+    open(os.path.join(a.out, 'report.md'), 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
+    json.dump({'video': a.video, 'pass': not fails, 'checks': R, 'cuts': detected, 'loudness_curve': curve}, open(os.path.join(a.out, 'report.json'), 'w', encoding='utf-8'), indent=2)
     # the terminal gets aligned columns; report.md keeps the table
     w = max(len(r['check']) for r in R)
     print('\n'.join(lines[:5]))

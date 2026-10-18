@@ -12,6 +12,8 @@ import argparse
 import json
 import os
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 
 import numpy as np
 
@@ -59,8 +61,8 @@ def analyze(path, out_root):
     md += ['![sheet](sheet.jpg)', '', '## Notes (fill in after looking at the sheet)', '',
            '- The one idea:', '- Structure (breathe / build / peak / land):', '- Type (family, size, how it enters):',
            '- Motion (camera, transitions, the repeated shape):', '- Color:', '- Sound (music, SFX, where it drops):', '- Steal this:']
-    open(os.path.join(out, 'analysis.md'), 'w').write('\n'.join(md) + '\n')
-    json.dump(res, open(os.path.join(out, 'analysis.json'), 'w'), indent=2)
+    open(os.path.join(out, 'analysis.md'), 'w', encoding='utf-8').write('\n'.join(md) + '\n')
+    json.dump(res, open(os.path.join(out, 'analysis.json'), 'w', encoding='utf-8'), indent=2)
     return res
 
 
@@ -74,7 +76,7 @@ def main():
     for r in rows:
         lines.append(f"| [{r['name']}]({r['name']}/analysis.md) | {r['width']}×{r['height']} @ {r['fps']:g} | {r['duration']:.1f}s | {len(r['cuts'])} | "
                      f"{r['median_shot']:.2f}s | {r.get('loudness', {}).get('integrated', '–')} LUFS | {r.get('tempo', '–')} |")
-    open(os.path.join(a.out, 'summary.md'), 'w').write('\n'.join(lines) + '\n')
+    open(os.path.join(a.out, 'summary.md'), 'w', encoding='utf-8').write('\n'.join(lines) + '\n')
     print('\n'.join(lines))
 
 

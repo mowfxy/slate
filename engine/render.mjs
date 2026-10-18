@@ -14,8 +14,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawn, spawnSync} from 'node:child_process';
+import {findPython, pyEnv} from './python.mjs';
 import {chromium} from 'playwright-core';
-import {serve, ROOT} from './serve.mjs';
+import {serve, siteFor, ROOT} from './serve.mjs';
 import {findChrome} from './browser.mjs';
 import {extractFrames} from './frames.mjs';
 
@@ -31,8 +32,9 @@ const log = (...m) => console.log('▸', ...m);
 // ---- footage: extract every clip's frames once, so the page shows exact frames instead of seeking video
 extractFrames(filmDir, build, log);
 
-const {server, url} = await serve();
-const pageUrl = `${url}/${path.relative(ROOT, filmDir).split(path.sep).join('/')}/index.html?render`;
+const site = siteFor(filmDir);
+const {server, url} = await serve(0, site);
+const pageUrl = `${url}/${path.relative(site, filmDir).split(path.sep).join('/')}/index.html?render`;
 const browser = await chromium.launch({
   executablePath: findChrome(),
   // software raster is about twice as fast as emulated GPU raster for CSS-heavy pages; WebGL still runs on SwiftShader
@@ -113,14 +115,14 @@ if (flag('audit')) { await audit(first); await browser.close(); server.close(); 
 if (!draft && !opt('from')) await audit(first);
 
 // ---- score (runs while frames render)
-const python = process.env.PYTHON || 'python3';
+const [python, ...pyArgs] = findPython();
 // a film that composes its own score (films/<name>/score.py, built on tools/synth.py) uses it; otherwise the sketch scorer
 const ownScore = path.join(filmDir, 'score.py');
 const scorer = fs.existsSync(ownScore) && !opt('music') ? ownScore : path.join(ROOT, 'tools/score.py');
 const scoreArgs = [scorer, path.join(build, 'manifest.json'), '--out', build];
 if (opt('music')) scoreArgs.push('--music', path.resolve(opt('music')), '--offset', opt('offset', '0'));
 const scoring = new Promise((res) => {
-  const p = spawn(python, scoreArgs, {stdio: ['ignore', 'pipe', 'inherit']});
+  const p = spawn(python, [...pyArgs, ...scoreArgs], {stdio: ['ignore', 'pipe', 'inherit'], env: pyEnv});
   let out = ''; p.stdout.on('data', (d) => (out += d));
   p.on('close', (code) => { process.stdout.write(out); res(code); });
 });
@@ -198,7 +200,7 @@ const post = [];
 if (man.post.vignette > 0) post.push(`vignette=angle=${(0.25 + 0.5 * man.post.vignette).toFixed(3)}`);
 if (man.post.grain > 0) post.push(`noise=c0s=${man.post.grain}:c0f=t+u`);
 post.push('format=yuv420p');
-const outDir = path.join(ROOT, 'out');
+const outDir = path.join(site, 'out');
 fs.mkdirSync(outDir, {recursive: true});
 const out = path.join(outDir, `${name}${draft ? '-draft' : ''}${from || to < Math.round(man.duration * fps) ? `-${from}-${to}` : ''}.mp4`);
 const audioStart = from / fps;
@@ -213,6 +215,6 @@ log(`video -> ${path.relative(process.cwd(), out)}`);
 
 // ---- critic
 if (!flag('no-critic') && !draft && from === 0) {
-  const c = spawnSync(python, [path.join(ROOT, 'tools/critic.py'), out, '--manifest', path.join(build, 'manifest.json'), '--out', path.join(build, 'critic')], {stdio: 'inherit'});
+  const c = spawnSync(python, [...pyArgs, path.join(ROOT, 'tools/critic.py'), out, '--manifest', path.join(build, 'manifest.json'), '--out', path.join(build, 'critic')], {stdio: 'inherit', env: pyEnv});
   process.exit(c.status ?? 1);
 }

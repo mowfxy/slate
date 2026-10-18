@@ -18,6 +18,8 @@ import json
 import os
 import subprocess
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 
 import numpy as np
 
@@ -116,15 +118,15 @@ def main():
     a = ap.parse_args()
 
     if a.cmd == 'fingerprint':
-        data = json.load(open(a.out)) if os.path.exists(a.out) else {}
+        data = json.load(open(a.out, encoding='utf-8')) if os.path.exists(a.out) else {}
         for i, v in enumerate(a.videos):
             name = a.names[i] if a.names and i < len(a.names) else os.path.splitext(os.path.basename(v))[0]
             data[name] = fingerprint(v)
             print(f"▸ {name}: {len(data[name])} informative frames")
-        json.dump(data, open(a.out, 'w'))
+        json.dump(data, open(a.out, 'w', encoding='utf-8'))
         return 0
 
-    refs = json.load(open(a.refs))
+    refs = json.load(open(a.refs, encoding='utf-8'))
     res = check(a.video, refs)
     # a run of near-copies is worse than scattered coincidences
     worst = 0
@@ -134,7 +136,7 @@ def main():
     res['worst_2s'] = worst
     res['pass'] = res['share'] <= a.max_share and worst < 3
     if a.out:
-        json.dump(res, open(a.out, 'w'), indent=2)
+        json.dump(res, open(a.out, 'w', encoding='utf-8'), indent=2)
     print(f"▸ originality: {len(res['near'])}/{res['frames']} frames close to a reference ({100 * res['share']:.1f}%), worst 2s window {worst}")
     for n in res['near'][:8]:
         print(f"   {n['t']:6.1f}s looks like {n['ref']} @ {n['ref_t']}s (hash distance {n['hamming']}, palette {n['palette']})")

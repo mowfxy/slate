@@ -1,6 +1,6 @@
 ---
 name: video-taste
-description: The taste guide for launch films, feature announcements, teasers and ads - principles for idea, structure, pacing, type, motion, image and sound, and how to find a film's look in the product itself. Load before pitching concepts or writing a film, and when judging a render.
+description: The taste guide for launch films, feature announcements, teasers, ads, loops and stings - the house bans, then principles for idea, structure, pacing, copy, type, layout, motion, image and sound, and how to find a film's look in the product itself. Merges Slate's frame-by-frame study of five reference films with cinetic's measured norms from eight. Load before pitching concepts or writing a film, and when judging a render.
 ---
 
 # Video taste
@@ -8,6 +8,17 @@ description: The taste guide for launch films, feature announcements, teasers an
 This is not a style. It is why good launch films work, written so you can make a film nobody has seen before. Every film starts from the product in front of you, never from another film.
 
 The principles come from frame-by-frame study of five reference films (measurements in [references/benchmarks.md](references/benchmarks.md)). Their signature moves are listed in [references/do-not-copy.md](references/do-not-copy.md). Read that list before pitching: those moves belong to those films. Learn why they work, then find this product's own version.
+
+## 0. House bans (when you invent the look)
+
+These are the fastest tells of generated work, measured by cinetic's evaluation rounds and enforced by its lint (`skills/cinetic/scripts/lint-film.mjs`) and critics. They apply whenever the film invents its look. **A brand the person supplies always wins**: their serif wordmark or their orange is used as given, recorded in `BRIEF.md` as a brand-supplied exception, and marked in cinetic code with `// cinetic:brand-supplied <what>`. Slate's own Mowafy Sans and Serif, and Dayline's orange dot, are brand-supplied in this sense.
+
+- **Words:** no eyebrow or kicker labels, stacked taglines or "Introducing…"; no full sentence dumped at once (copy arrives in fragments, §5); no text walls or filler (decorative mono captions, fake metrics, lorem ipsum).
+- **Type:** one clean sans (plus a mono if the product needs one); no serif and no italic or faked skew.
+- **Colour:** no orange, amber, beige, cream, tan or sand; no neon, glow, bloom or halo; no purple, violet or indigo, and no multi-hue gradient; no glassmorphism. One accent with one meaning, from red, green, teal, blue or yellow, on ink and paper tinted toward the product's world.
+- **Decoration:** no emoji or stock icons; no AI sparkles, particles, confetti, lens flares or code rain; no bounce except on a true landing, and never overshoot or a per-letter trick on copy (only the one hero word may move letter by letter).
+
+What remains is plenty. The creativity goes into the idea, the device and the choreography.
 
 ## 1. The idea comes from the product
 
@@ -43,7 +54,7 @@ Every film has a form: the way its pace and sound move from the first second to 
 - **Contrast is the tool, not the formula.** Stillness before motion, silence before sound, dark before light. Use it where the idea needs it, not always before the logo.
 - **The reveal arrives after the idea is felt.** Never open on the logo or the product name.
 - **End where you started, changed.** The closing frame answers the opening one.
-- **The logo holds 2.5–5s** on a quiet frame. The tagline arrives after the mark.
+- **The end card runs 2–5s**: the lockup assembles over about 1–1.3s, then holds on a quiet frame. Past about 2.5s it must keep building (a 3–6% creep, or a 10–20% push); a complete card that sits static reads as a drag. The tagline (or the one practical fact: a date, a URL, "out now") arrives after the mark has resolved, as its own fragment. The lockup appears once, at the end.
 - **Claim, then proof.** Each line on screen is followed by the product proving it.
 
 ## 4. Pacing
@@ -57,10 +68,19 @@ Pace is how long the viewer is allowed to look. Cut a shot when it has said its 
 - **Leave air.** A second of nothing between a claim and its proof lets the claim land. Room is a luxury signal.
 - **Nothing is static.** Every shot moves a little (a 3–8% push, a drift, parallax). True holds are for the logo and for the end.
 
-## 5. Type
+## 5. Copy and type
 
-- **Use the brand's own typefaces.** If there are none, pick one serif or one sans and stay with it. Two voices at most: a display voice for lines, a quiet voice for labels.
-- **≤ 7 words per line, ≤ 2 lines, ≤ 9 words on screen.** Break long thoughts across moments.
+**Copy arrives in fragments** (cinetic's measured grammar; details in `skills/cinetic/references/copy-and-type.md` §2b):
+- 1–4 words per fragment (2–3 is best), cut at grammar: after the subject, before the object, before the payoff noun or the name. A thought longer than 4 words is a chain of 2–4 fragments with 0.5–1.5s of picture between them, never one block.
+- Text and picture take turns: the picture acts between fragments, and nothing fast moves while words are being read. A fragment holds at least max(1.0s, 0.7s + 0.13s per word) after it lands, drifting slowly rather than frozen.
+- The animation is the verb: 2–4 words before the demo and 1–3 after it; the words never describe what the picture already shows. Cut a line one step short of its payoff and let the product deliver it ("here is the newest" → the product → its name).
+- Copy on at most about two thirds of the runtime, with at least 1.5s of pure picture in every 10s.
+- Open inside the problem; never on "Introducing…", a rhetorical question or the logo. Avoid stock phrasing (seamless, unlock, AI-powered, streamline).
+
+**Type:**
+
+- **Use the brand's own typefaces.** If there are none, pick one clean sans for the brand's personality (§0) and stay with it: a humanist sans at a light weight for calm, a tight grotesk for fast, a rounded sans for friendly. Two voices at most: a display voice for lines, a quiet voice (or a mono) for labels. Numbers use tabular figures.
+- **≤ 4 new words per fragment, ≤ 8 words on screen** (5 when each fragment replaces the last; a crisp, energetic film allows 5 and 10).
 - **Lines are big and tight.** A line on its own card is the whole frame's subject: 140–180px at 1080p (7–9% of the frame's width), set tight (−0.03 to −0.045em) in the display weight, near-black on true white or white on true black. A light serif at 96px floating in a beige field is what made an earlier Slate film look timid.
 - **The mark is bigger still** (200–260px), on the optical centre, with the tagline a clear step below at about a fifth of its size.
 - **Type moves with the film's move.** If things land, words land. If things focus, words focus. A word rises through its own mask with a long, soft stop (`expo.out`, ~0.9s); it leaves faster than it came (`power3.in`, ~0.4s). Never a generic fade or typewriter by default.
@@ -85,8 +105,8 @@ This is where most AI video looks cheap. The bar:
 - **No label cut by the frame.** A word half in frame is the commonest sign of an unconsidered shot. When the camera holds, every label is whole or entirely out: put the frame's edges in the gaps between rows. Mark the UI `data-ui` and the audit fails any word the frame cuts for more than 0.3s.
 - **Full contrast.** True white and near-black, with the brand's one accent. No beige haze, no vignette or grain over UI: they turn white into grey and make crisp UI look like a photocopy. Grain is for film-like footage, not interfaces.
 - **Depth from the UI itself.** Things that lift get a shadow that grows as they rise and tightens as they land; the window has a 1px edge and a soft, long shadow on a ground one step darker than white. That's enough.
-- **Smooth is a frame rate.** Render at 60 fps. Every move eases in and out; nothing starts or stops dead, and nothing bounces.
-- **Motion blur where things move fast**, and only there: `F.blur(from, to, 6)` renders subframes on whip moves, flights and fast pushes. A few subframes stack visible copies; six or more read as blur.
+- **Smooth is a frame rate.** Render at 60 fps (a GIF at 25 or 50, never 30). Every move eases; entrances decay and exits accelerate, only the camera eases both ways; nothing starts or stops dead, and nothing bounces. A film uses about three easing characters (cinetic's tokens: `skills/cinetic/references/motion-tokens.md`).
+- **Motion blur where things move fast**, and only there (anything past about 12 px per frame): `F.blur(from, to, samples)` with 8+ subframes on pans and flights and 10–14 on zooms. Fewer stack visible copies of every label. Nothing should move faster than about 60–80 px per frame; past that, redesign the move as a cut, a match cut or a mask wipe instead of adding samples.
 - **One focal point per frame.** If two things compete, cut one or blur one.
 - **Colour from the product.** Ground, ink, one accent, all from the brand. A dark product gets a dark film; a white-canvas product gets a white film.
 
@@ -104,16 +124,21 @@ Sound is taste you hear. Most generated films fail here the same way: the same b
 
 ## 9. Format
 
-| Use | Length | Aspect | Notes |
-|---|---|---|---|
-| Launch film | 30–90s | 16:9 | The idea, three or four proofs, the mark |
-| Feature announcement | 15–40s | 16:9, 1:1 | One claim, one or two proofs, the mark |
-| Teaser | 6–25s | 1:1, 16:9 | One image idea, no UI or a single glimpse |
-| Paid social ad | 6–15s | 9:16, 1:1 | The claim within 1.5s, captions burned in, a CTA end card |
+| Use | Length | Aspect | Notes | Engine |
+|---|---|---|---|---|
+| Launch film | 20–90s | 16:9, then 9:16 and 1:1 re-laid out | The idea, two to four proofs, the mark. 15–25 words in all | Slate, or cinetic Remotion for the social set |
+| Feature announcement, update film | 8–40s | 16:9, 1:1 | One claim, one or two proofs, the mark. ≤ 12 words | Slate |
+| Teaser | 6–25s | 1:1, 16:9 | One image idea, no UI or a single glimpse | either |
+| Paid social ad, vertical | 6–15s | 9:16, 1:1 | The claim within 1.5s, captions burned in, a CTA end card; platform caption zones filled, not empty | either |
+| Feature loop | 4–15s, whole bars | 16:9 | Reads muted, ≤ 6 words, last frame flows into the first; MP4, WebM, GIF | cinetic Remotion |
+| Logo sting | 3–8s | 16:9 | One tuned hit and a tail; ProRes 4444 alphas, held and cleared | cinetic Remotion |
+| UI walkthrough | 20–90s | 16:9 | One chapter per 2–4 bars, ≤ 5 words per caption, SRT captions | cinetic Remotion, or Slate for a live rebuild |
 
 ## Before you build, answer in writing
 
-- The idea in one sentence, and why it belongs only to this product.
+- The idea in one sentence, and why it belongs only to this product (and the "unlike the obvious version, it…" it shows).
+- The device: the one object that travels through every shot.
+- The techniques drawn by `pick.py`, and which were dropped and why.
 - The film's one move.
 - What this film does that none of the references do.
 - The form, the pace curve, and the last second, and why the trailer form is or isn't right here.

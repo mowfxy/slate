@@ -31,6 +31,8 @@ import json
 import os
 import subprocess
 import sys
+for _s in (sys.stdout, sys.stderr):  # ▸ and ✓ on a cp1252 console
+    getattr(_s, 'reconfigure', lambda **k: None)(encoding='utf-8', errors='replace')
 import urllib.error
 import urllib.request
 
@@ -56,7 +58,7 @@ def load_manifest(film):
     p = os.path.join(film, 'build', 'manifest.json')
     if not os.path.exists(p):
         sys.exit(f'no {p}: run `node engine/render.mjs {film} --audit` first, it writes the manifest')
-    return json.load(open(p))
+    return json.load(open(p, encoding='utf-8'))
 
 
 def outline(man):
@@ -231,7 +233,7 @@ def fit(film, take, man=None):
         os.remove(stretched)
     meta = {'source': os.path.relpath(src, film), 'tempo': round(tempo, 2), 'bpm': bpm, 'stretch': round(ratio, 5),
             'downbeat': round(start, 3), 'duration': man['duration']}
-    json.dump(meta, open(os.path.join(film, 'music', 'track.json'), 'w'), indent=2)
+    json.dump(meta, open(os.path.join(film, 'music', 'track.json'), 'w', encoding='utf-8'), indent=2)
     print(f"▸ fitted {meta['source']}: {tempo:.1f} → {bpm:g} BPM (×{ratio:.3f}), downbeat at {start:.3f}s -> music/track.wav")
     print("▸ use it with F.music({track: 'music/track.wav'}) and render")
     return dst
@@ -274,7 +276,7 @@ def main():
         ext = {'audio/wav': 'wav', 'audio/x-wav': 'wav', 'audio/mpeg': 'mp3', 'audio/mp3': 'mp3', 'audio/ogg': 'ogg'}.get(mime, 'mp3')
         path = os.path.join(film, 'music', f'take-{k}.{ext}')
         open(path, 'wb').write(data)
-        json.dump({'model': a.model, 'brief': text, 'frames': len(images), 'mime': mime}, open(path.rsplit('.', 1)[0] + '.json', 'w'), indent=2)
+        json.dump({'model': a.model, 'brief': text, 'frames': len(images), 'mime': mime}, open(path.rsplit('.', 1)[0] + '.json', 'w', encoding='utf-8'), indent=2)
         tempo, offset, _ = grid(path)
         print(f'  -> {os.path.relpath(path, film)}: {tempo:.1f} BPM, downbeat at {offset:.2f}s')
         first = first or os.path.relpath(path, film)
